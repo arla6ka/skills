@@ -18,12 +18,14 @@ type StatusProps = Omit<React.ComponentProps<'span'>, 'children'> & {
   status: StatusName;
   /** Replaces the default word, such as "Sending, 42%". */
   label?: string;
+  /** Lets a script move focus here, for a status that replaces the button that had it. It stays out of the Tab order. */
+  focusable?: boolean;
 };
 
-function Status({status, label, className, ...props}: StatusProps) {
+function Status({status, label, focusable, className, ...props}: StatusProps) {
   const meta = STATUS_META[status];
   return (
-    <span data-slot="status" data-status={status} className={cn('inline-flex items-center gap-2 text-sm text-fg-2', className)} {...props}>
+    <span data-slot="status" data-status={status} tabIndex={focusable ? -1 : undefined} className={cn('inline-flex items-center gap-2 text-sm text-fg-2', focusable && 'rounded-sm', className)} {...props}>
       {status === 'running'
         ? <Spinner size={14} className="text-accent-line"/>
         : <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', meta.dot)}/>}

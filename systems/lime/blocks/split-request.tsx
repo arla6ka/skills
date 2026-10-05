@@ -1,9 +1,9 @@
-import {formatAmount} from '../ui/amount';
+import {Amount, formatAmount} from '../ui/amount';
 import {Avatar} from '../ui/avatar';
 import {Button} from '../ui/button';
 import {List, ListItem} from '../ui/list';
 
-// A block: a bill you paid, split by what each person owes, with one request to send.
+// A block: a bill you paid, split by what each person owes, with one request to send and its total beside it.
 
 /** Dinner you paid for, split by what each person ordered, with one request to send. */
 export function SplitDinner() {
@@ -23,7 +23,11 @@ export function SplitDinner() {
           <ListItem key={p.name} leading={<Avatar name={p.name}/>} title={p.name} trailing={formatAmount(p.value)}/>
         ))}
       </List>
-      <Button>Request {formatAmount(owed)}</Button>
+      {/* The label is the action; the total sits beside it, so the button reads the same whatever the sum. */}
+      <div className="flex items-center gap-3">
+        <Button className="flex-1">Request payment</Button>
+        <Amount value={owed} size="lg"/>
+      </div>
     </section>
   );
 }

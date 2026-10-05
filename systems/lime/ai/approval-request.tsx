@@ -1,9 +1,10 @@
 'use client';
 
-import {useEffect, useRef} from 'react';
+import {useId} from 'react';
 import {Edit, Icon} from '../icon';
+import {useFocusWhenReplaced} from '../lib/use-focus-when-replaced';
 import {cn} from '../lib/utils';
-import {Amount} from '../ui/amount';
+import {Amount, amountAffordability} from '../ui/amount';
 import {Button} from '../ui/button';
 import {Card} from '../ui/card';
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '../ui/collapsible';
@@ -11,7 +12,8 @@ import {Status} from '../ui/status';
 
 // The assistant asking before it moves money: what it wants to do, the amount, one line of reason, then
 // Approve, Edit and Decline. Approve is the lime primary and should be the one glow on the screen. Edit is a
-// pencil so the row fits a phone. Decline is quiet, never red, since saying no is safe. After a choice the
+// pencil so the row fits a phone. When `available` cannot cover the amount, Approve is off and a line under the
+// reason says why, so Edit and Decline are the ways on. Decline is quiet, never red, since saying no is safe. After a choice the
 // buttons give way to a status line in the same height, so nothing below jumps. The footer is a polite live
 // region, so the outcome is announced. The status line takes focus when it replaces the button that had it, so
 // keyboard and screen reader users are not dropped to the top of the page.
@@ -38,16 +40,18 @@ type ApprovalRequestLabels = {
   why?: string;
   approved?: string;
   declined?: string;
+  /** Why Approve is off when the amount is more than available. */
+  insufficient?: string;
 };
 
-const defaultLabels: Required<ApprovalRequestLabels> = {approve: 'Approve', decline: 'Decline', edit: 'Edit', why: 'Why?', approved: 'Approved', declined: 'Declined'};
+const defaultLabels: Required<ApprovalRequestLabels> = {approve: 'Approve', decline: 'Decline', edit: 'Edit', why: 'Why?', approved: 'Approved', declined: 'Declined', insufficient: 'More than you have available'};
 
 type ApprovalRequestProps = Omit<React.ComponentProps<'div'>, 'title'> & {
   /** The action as a verb and its object, such as "Pay Lena for rent". */
   title: string;
   /** Signed: negative is money out. */
   amount: number;
-  /** The money in the account, so the amount warns when it is tight. */
+  /** The money in the account, so the amount warns when it is tight and Approve is off when it is short. */
   available?: number;
   /** One line on why the assistant is asking. */
   reason: string;
@@ -65,18 +69,11 @@ type ApprovalRequestProps = Omit<React.ComponentProps<'div'>, 'title'> & {
 
 function ApprovalRequest({title, amount, available, reason, reasons, state = 'waiting', pending, onApprove, onEdit, onDecline, labels, className, children, ...props}: ApprovalRequestProps) {
   const words = {...defaultLabels, ...labels};
-  const footer = useRef<HTMLDivElement>(null);
-  const outcome = useRef<HTMLSpanElement>(null);
-  const previous = useRef(state);
-  useEffect(() => {
-    const was = previous.current;
-    previous.current = state;
-    if (was !== 'waiting' || state === 'waiting') return;
-    // The button that had focus is gone by now, so focus has fallen to the body. Move it to the outcome, unless
-    // the person has already gone somewhere else.
-    const active = document.activeElement;
-    if (!active || active === document.body || footer.current?.contains(active)) outcome.current?.focus();
-  }, [state]);
+  // Like ChatInput's Send, Approve is off when the account cannot cover the amount, and the line under the reason says why.
+  const short = amountAffordability(amount, available) === 'insufficient';
+  const shortId = useId();
+  // The button that had focus is gone once the outcome shows; focus moves to the outcome.
+  const {region: footer, target: outcome} = useFocusWhenReplaced(state !== 'waiting');
   return (
     <Card data-slot="approval-request" data-state={state} role="group" aria-label={title} className={cn('w-full min-w-0 gap-3 p-4', className)} {...props}>
       <div className="flex min-w-0 flex-col gap-1">
@@ -85,17 +82,18 @@ function ApprovalRequest({title, amount, available, reason, reasons, state = 'wa
           <Amount value={amount} available={available} size="lg"/>
         </div>
         <p className="truncate text-sm text-fg-2">{reason}</p>
+        {short && state === 'waiting' && <p id={shortId} data-slot="approval-short" className="text-sm text-danger-text">{words.insufficient}</p>}
         {reasons?.length ? <Reasons reasons={reasons} label={words.why}/> : null}
       </div>
       {children}
       <div ref={footer} aria-live="polite" className="flex min-h-(--control-md) items-center gap-2">
         {state === 'waiting' && <>
-          <Button className="min-w-0 flex-1" pending={!!pending} onClick={onApprove}>{words.approve}</Button>
+          <Button className="min-w-0 flex-1" pending={!!pending} disabled={short} aria-describedby={short ? shortId : undefined} onClick={onApprove}>{words.approve}</Button>
           <Button variant="secondary" size="icon" aria-label={words.edit} disabled={pending} onClick={onEdit}><Icon icon={Edit} size={16}/></Button>
           <Button variant="ghost" disabled={pending} onClick={onDecline}>{words.decline}</Button>
         </>}
-        {state === 'approved' && <Status ref={outcome} tabIndex={-1} status="done" label={words.approved} className="rounded-sm"/>}
-        {state === 'declined' && <Status ref={outcome} tabIndex={-1} status="canceled" label={words.declined} className="rounded-sm"/>}
+        {state === 'approved' && <Status ref={outcome} focusable status="done" label={words.approved}/>}
+        {state === 'declined' && <Status ref={outcome} focusable status="canceled" label={words.declined}/>}
       </div>
     </Card>
   );

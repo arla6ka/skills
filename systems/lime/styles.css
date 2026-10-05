@@ -132,7 +132,7 @@
   .glow-accent {
     --glow-from: var(--glow-accent-from); --glow-to: var(--glow-accent-to);
     --glow-edge: var(--glow-accent-edge); --glow-bloom: var(--glow-accent-bloom);
-    --glow-cast: var(--glow-accent-cast); --glow-light: var(--glow-accent-light); --glow-halo: var(--glow-accent-halo);
+    --glow-cast: var(--glow-accent-cast); --glow-light: var(--glow-accent-light);
     --glow-from-lit: var(--glow-accent-from-lit); --glow-to-lit: var(--glow-accent-to-lit);
     --glow-edge-lit: var(--glow-accent-edge-lit); --glow-bloom-lit: var(--glow-accent-bloom-lit);
     --glow-press-from: var(--glow-accent-from-press); --glow-press-to: var(--glow-accent-to-press);
@@ -142,7 +142,7 @@
   .glow-danger {
     --glow-from: var(--glow-danger-from); --glow-to: var(--glow-danger-to);
     --glow-edge: var(--glow-danger-edge); --glow-bloom: var(--glow-danger-bloom);
-    --glow-cast: var(--glow-danger-cast); --glow-light: var(--glow-danger-light); --glow-halo: var(--glow-danger-halo);
+    --glow-cast: var(--glow-danger-cast); --glow-light: var(--glow-danger-light);
     --glow-from-lit: var(--glow-danger-from-lit); --glow-to-lit: var(--glow-danger-to-lit);
     --glow-edge-lit: var(--glow-danger-edge-lit); --glow-bloom-lit: var(--glow-danger-bloom-lit);
     --glow-press-from: var(--glow-danger-from-press); --glow-press-to: var(--glow-danger-to-press);
@@ -150,7 +150,7 @@
   .glow-success {
     --glow-from: var(--glow-success-from); --glow-to: var(--glow-success-to);
     --glow-edge: var(--glow-success-edge); --glow-bloom: var(--glow-success-bloom);
-    --glow-cast: var(--glow-success-cast); --glow-light: var(--glow-success-light); --glow-halo: var(--glow-success-halo);
+    --glow-cast: var(--glow-success-cast); --glow-light: var(--glow-success-light);
     --glow-from-lit: var(--glow-success-from-lit); --glow-to-lit: var(--glow-success-to-lit);
     --glow-edge-lit: var(--glow-success-edge-lit); --glow-bloom-lit: var(--glow-success-bloom-lit);
     --glow-press-from: var(--glow-success-from-press); --glow-press-to: var(--glow-success-to-press);
@@ -158,19 +158,13 @@
   }
 }
 
-/* Reduced motion: the lit layer does not fade. It is either on or off. */
-@media (prefers-reduced-motion: reduce) {
-  :where(.lime, [data-system="lime"]) .glow::before { transition: none; }
-}
-:where(.lime, [data-system="lime"]) [data-force-reduced-motion] .glow::before, :where(.lime, [data-system="lime"]) .glow[data-force-reduced-motion]::before { transition: none; }
-
 /* Forced colors drops backgrounds and shadows, so a state that only a fill or a ring carries disappears.
    These rules give each one a system color it keeps. They are the only forced-colors rules Lime has. Focus rings are outlines, which the browser keeps in
    forced colors; the rules here cover the places where focus or selection is carried by a fill or a border colour. */
 @media (forced-colors: active) {
   .glow { background-image: none; box-shadow: none; border: 1px solid ButtonText; }
   .glow::before { display: none; }
-  [data-slot="button"]:not(.underline-offset-4), [data-slot="copy-button"]:not(.underline-offset-4) { border: 1px solid ButtonText; }
+  [data-slot="button"]:not([data-variant="link"]), [data-slot="copy-button"]:not([data-variant="link"]) { border: 1px solid ButtonText; }
   [data-slot="avatar"] { border: 1px solid CanvasText; }
   [data-slot="switch"][data-checked], [data-slot="checkbox"][data-checked], [data-slot="checkbox"][data-indeterminate], [data-slot="radio"][data-checked], [data-slot="segmented-item"][data-checked], [data-slot="chip"][data-pressed] { background-color: Highlight; border-color: Highlight; color: HighlightText; }
   [data-slot="switch-thumb"] { background-color: ButtonText; }
@@ -187,9 +181,6 @@
   [data-slot="table-row"][data-state="selected"] { outline: 2px solid Highlight; outline-offset: -2px; }
 }
 
-/* The switch thumb travels with translate-x, which is physical, so in right-to-left text it would leave the
-   track. This turns the distance around. */
-[dir="rtl"] [data-slot="switch-thumb"][data-checked] { --tw-translate-x: -16px; }
 
 @theme inline reference {
   --*: initial;

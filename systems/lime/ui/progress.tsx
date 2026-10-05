@@ -1,7 +1,7 @@
 'use client';
 
 import {Meter as MeterPrimitive} from '@base-ui/react/meter';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 
 // How far something has come toward a known end: a savings goal, a budget spent, a card's limit. A bar
 // for a row or a card, a ring for a goal tile with the figure inside. The lime fill is one flat color on the
@@ -37,7 +37,7 @@ function Progress({value, max = 100, min = 0, label, valueText, shape = 'bar', s
     const r = (box - stroke) / 2;
     const length = 2 * Math.PI * r;
     return (
-      <MeterPrimitive.Root data-slot="progress" data-shape="ring" {...root} className={cn('relative inline-grid shrink-0 place-items-center', className)} style={{width: box, height: box}}>
+      <MeterPrimitive.Root data-slot="progress" data-shape="ring" {...root} className={mergeClass('relative inline-grid shrink-0 place-items-center', className)} style={{width: box, height: box}}>
         <svg aria-hidden="true" width={box} height={box} viewBox={`0 0 ${box} ${box}`} className="absolute inset-0 -rotate-90 rtl:-scale-y-100">
           <circle cx={box / 2} cy={box / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-surface-3"/>
           {share > 0 && <>
@@ -50,7 +50,7 @@ function Progress({value, max = 100, min = 0, label, valueText, shape = 'bar', s
   }
 
   return (
-    <MeterPrimitive.Root data-slot="progress" data-shape="bar" {...root} className={cn('w-full', className)}>
+    <MeterPrimitive.Root data-slot="progress" data-shape="bar" {...root} className={mergeClass('w-full', className)}>
       <MeterPrimitive.Track data-slot="progress-track" className="block h-2 w-full overflow-hidden rounded-full bg-surface-3">
         <MeterPrimitive.Indicator data-slot="progress-indicator" className={cn('block h-full rounded-full bg-accent transition-[width] duration-(--dur-base) ease-(--ease-out)', share === 0 && 'hidden')}/>
       </MeterPrimitive.Track>

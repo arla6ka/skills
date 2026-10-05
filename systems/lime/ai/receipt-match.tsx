@@ -45,7 +45,7 @@ function ReceiptMatch({merchant, date, amount, state, note, src, onAdd, classNam
   return (
     <div data-slot="receipt-match" data-state={state} className={cn('flex w-full min-w-0 items-center gap-3', className)} {...props}>
       {state === 'missing' // value-ok: the button is the 48 by 40 receipt thumbnail it stands in for, not a control size
-        ? <button type="button" onClick={onAdd} aria-label={`Add a receipt for ${merchant}`} className="flex h-12 w-10 shrink-0 items-center justify-center rounded-field border border-dashed border-control text-fg-3 outline-none hover:border-fg-3 hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+        ? <button type="button" onClick={onAdd} aria-label={`Add a receipt for ${merchant}`} className="flex h-12 w-10 shrink-0 items-center justify-center rounded-field border border-dashed border-control text-fg-3 hover:border-fg-3 hover:text-fg">
             <Icon icon={Add} size={16}/>
           </button>
         : <span className="relative h-12 w-10 shrink-0">

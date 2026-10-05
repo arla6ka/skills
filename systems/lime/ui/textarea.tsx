@@ -1,46 +1,52 @@
 'use client';
 
 import {Input as InputPrimitive} from '@base-ui/react/input';
+import {mergeProps} from '@base-ui/react/merge-props';
+import type {VariantProps} from 'class-variance-authority';
 import {useCallback, useLayoutEffect, useRef} from 'react';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
+import {fieldControl} from './input';
 
-// A multi-line field. It grows with its content when `autoGrow` is set, up to the max height, then scrolls.
-// It is sized on mount and when `value` changes from outside, not only on typing.
+// A multi-line field, Input's sibling: the same fill, edge, ring and invalid and disabled looks, from the same
+// fieldControl, and the same size prop for its type (sm and md are 14px, lg 16px). It is at least 80px tall. It
+// grows with its content when `autoGrow` is set, up to the max height, then scrolls. It is sized on mount and when
+// `value` changes from outside, not only on typing.
 
-type TextareaProps = Omit<React.ComponentProps<'textarea'>, 'className'> & {
-  className?: string;
+type TextareaProps = Omit<React.ComponentProps<'textarea'>, 'className'> & VariantProps<typeof fieldControl> & {
+  /** A string, or a function of the field's state (dirty, touched, valid ...) like every Base UI part. */
+  className?: InputPrimitive.Props['className'];
   /** Grow with the text up to max-h-60 (240px). */
   autoGrow?: boolean;
 };
 
-function Textarea({className, autoGrow, onInput, value, ...props}: TextareaProps) {
-  const ref = useRef<HTMLInputElement>(null);
-  const grow = useCallback((el: HTMLElement | null) => {
+function Textarea({className, size, autoGrow, onInput, value, defaultValue, ref, ...props}: TextareaProps) {
+  const own = useRef<HTMLTextAreaElement | null>(null);
+  const grow = useCallback((el: HTMLTextAreaElement | null) => {
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
   }, []);
+  // Ours for autoGrow, and the caller's.
+  const setRef = useCallback((el: HTMLElement | null) => {
+    const area = el as HTMLTextAreaElement | null;
+    own.current = area;
+    if (typeof ref === 'function') ref(area);
+    else if (ref) ref.current = area;
+  }, [ref]);
   // Size once on mount, and again when the value is set from outside.
-  useLayoutEffect(() => { if (autoGrow) grow(ref.current); }, [autoGrow, value, grow]);
+  useLayoutEffect(() => { if (autoGrow) grow(own.current); }, [autoGrow, value, grow]);
   return (
     <InputPrimitive
-      ref={ref}
+      ref={setRef}
       data-slot="textarea"
-      render={<textarea/>}
       value={value}
-      onInput={(e: React.FormEvent<HTMLInputElement>) => {
-        if (autoGrow) grow(e.currentTarget);
-        (onInput as React.FormEventHandler<HTMLInputElement> | undefined)?.(e);
-      }}
-      className={cn(
-        'block min-h-20 w-full min-w-0 resize-y rounded-field border border-line-strong bg-field px-3 py-2 text-sm text-fg outline-none',
-        'placeholder:text-fg-3 hover:not-disabled:not-aria-invalid:border-control',
-        'focus-visible:border-accent-line focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-0 focus-visible:outline-ring',
-        'aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-fg-disabled',
-        autoGrow && 'max-h-60 resize-none',
-        className,
-      )}
-      {...(props as Record<string, unknown>)}
+      defaultValue={defaultValue}
+      className={mergeClass([fieldControl({size}), 'block h-auto min-h-20 resize-y py-2', autoGrow && 'max-h-60 resize-none'], className)}
+      // The textarea's own props join Base UI's here, typed for a textarea; mergeProps chains the handlers, so
+      // Field still sees every change.
+      render={inputProps => <textarea {...mergeProps<'textarea'>(inputProps, props, {
+        onInput: e => { if (autoGrow) grow(e.currentTarget); onInput?.(e); },
+      })}/>}
     />
   );
 }

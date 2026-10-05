@@ -4,7 +4,7 @@ import {createContext, useContext, useSyncExternalStore} from 'react';
 import {Drawer as DrawerPrimitive} from '@base-ui/react/drawer';
 import {Close, Icon} from '../icon';
 import {useLimePortal} from '../lib/portal';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 import {Button} from './button';
 
 // A panel that slides in from an edge and keeps the page in view: a transaction's details, filters, a
@@ -95,10 +95,10 @@ function SheetContent({className, children, ...props}: SheetContentProps) {
         <DrawerPrimitive.Popup
           data-slot="sheet-content"
           data-side={side}
-          className={typeof className === 'function' ? className : cn(
+          className={mergeClass([
             'flex flex-col overflow-hidden bg-raised text-fg shadow-overlay outline-none data-swiping:select-none',
-            popupBySide[side], motion, className,
-          )}
+            popupBySide[side], motion,
+          ], className)}
           {...props}
         >
           {side === 'bottom' && <div data-slot="sheet-handle" aria-hidden="true" className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-line-strong"/>}
@@ -128,16 +128,16 @@ function SheetHeader({className, showClose = true, children, ...props}: SheetHea
 }
 
 function SheetTitle({className, ...props}: DrawerPrimitive.Title.Props) {
-  return <DrawerPrimitive.Title data-slot="sheet-title" className={typeof className === 'function' ? className : cn('title-overlay', className)} {...props}/>;
+  return <DrawerPrimitive.Title data-slot="sheet-title" className={mergeClass('title-overlay', className)} {...props}/>;
 }
 
 function SheetDescription({className, ...props}: DrawerPrimitive.Description.Props) {
-  return <DrawerPrimitive.Description data-slot="sheet-description" className={typeof className === 'function' ? className : cn('text-sm text-fg-2', className)} {...props}/>;
+  return <DrawerPrimitive.Description data-slot="sheet-description" className={mergeClass('text-sm text-fg-2', className)} {...props}/>;
 }
 
 /** The part that scrolls. Text inside can be selected with a mouse without starting a swipe. */
 function SheetBody({className, ...props}: DrawerPrimitive.Content.Props) {
-  return <DrawerPrimitive.Content data-slot="sheet-body" className={typeof className === 'function' ? className : cn('min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-2', className)} {...props}/>;
+  return <DrawerPrimitive.Content data-slot="sheet-body" className={mergeClass('min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-2', className)} {...props}/>;
 }
 
 function SheetFooter({className, ...props}: React.ComponentProps<'div'>) {

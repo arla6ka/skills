@@ -2,7 +2,7 @@
 
 import {Collapsible as CollapsiblePrimitive} from '@base-ui/react/collapsible';
 import {ChevronDown, Icon} from '../icon';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
 
 // One section that opens and closes: advanced settings, a long description, a receipt's details. The
 // trigger is a real button with aria-expanded, and the panel animates its height over 200ms. For a stack
@@ -21,7 +21,7 @@ function CollapsibleTrigger({className, children, hideIcon, ...props}: Collapsib
   return (
     <CollapsiblePrimitive.Trigger
       data-slot="collapsible-trigger"
-      className={typeof className === 'function' ? className : cn('group/collapsible-trigger flex w-full items-center justify-between gap-2 rounded-md py-2 text-start text-sm font-medium underline-offset-4 hover:not-data-disabled:underline data-disabled:cursor-not-allowed data-disabled:text-fg-disabled', className)}
+      className={mergeClass('group/collapsible-trigger flex w-full items-center justify-between gap-2 rounded-md py-2 text-start text-sm font-medium underline-offset-4 hover:not-data-disabled:underline data-disabled:cursor-not-allowed data-disabled:text-fg-disabled', className)}
       {...props}
     >
       {children}
@@ -34,7 +34,7 @@ function CollapsibleContent({className, ...props}: CollapsiblePrimitive.Panel.Pr
   return (
     <CollapsiblePrimitive.Panel
       data-slot="collapsible-content"
-      className={typeof className === 'function' ? className : cn('h-(--collapsible-panel-height) overflow-hidden text-sm text-fg-2 transition-[height] duration-(--dur-base) ease-(--ease-out) data-ending-style:h-0 data-starting-style:h-0', className)}
+      className={mergeClass('h-(--collapsible-panel-height) overflow-hidden text-sm text-fg-2 transition-[height] duration-(--dur-base) ease-(--ease-out) data-ending-style:h-0 data-starting-style:h-0', className)}
       {...props}
     />
   );

@@ -35,7 +35,9 @@ When rules conflict, the earlier item wins.
    - Wrong: `<p className="text-[#0f0f0d]">`
 4. lime-one-action MUST Use one lime primary action per view; every other action is solid, secondary, outline or ghost. Because the glowing lime is how the person finds the next step in a second.
 5. lime-lime-scarce NEVER Fill a page, card or section with lime, or put white text on it; text on lime is --on-accent. Because white on lime is unreadable and a lime block drowns the one action.
+   - Wrong: `<Card className="bg-accent text-white">Your goals</Card>`
 6. lime-glow-scarce NEVER Add glow beyond primary and destructive buttons, the balance chip and one featured card. Because two glowing things compete and neither reads as the action.
+   - Wrong: `<Card variant="glow">Recent activity</Card> // beside the upgrade card`
 7. lime-money-sign MUST Format every amount with formatAmount or Amount, never by hand: formatAmount text in List and Table rows, the Amount pill for a sum beside a control or one that needs a tone. Because a hand-built string drops the minus, the separators or the tabular figures.
    - Correct: `import {Amount, formatAmount} from '@/components/lime/ui/amount'`
    - Wrong: `<span>${total}</span>`
@@ -66,21 +68,32 @@ Every screen sits in this frame.
 ## Anti-slop
 The habits of generated UI that Lime bans. Details: https://design.how/systems/lime/foundations/anti-slop.md
 - anti-slop-no-eyebrow NEVER Put a small label, a category or a number such as 01 above a title or a section. Because the heading already names the section, and the label only adds a second voice saying less.
+  - Wrong: `<p className="text-xs font-medium text-fg-3">Overview</p><h2>Spending</h2>`
 - anti-slop-no-stat-cards NEVER Lay out a row of equal cards each holding one number; show one Balance, a List or a sentence. Because equal boxes make every number equally loud, so the one that matters is lost.
+  - Wrong: `<Card>Income</Card><Card>Spent</Card><Card>Saved</Card>`
 - anti-slop-earn-surface MUST Group with space first; use a Card only around one thing the person acts on, and never put a Card in a Card. Because boxes around everything flatten the page into equal tiles and the eye has nowhere to start.
 - anti-slop-no-icon-tiles NEVER Put an icon in a tinted tile, or beside a heading or a stat as decoration; ListIcon in a List row is the one round mark. Because a decorative icon carries no meaning and pulls the eye from the words.
+  - Wrong: `<span className="rounded-panel bg-accent-wash p-2"><Icon icon={Wallet}/></span>`
 - anti-slop-no-side-rail NEVER Mark a card, row or quote with a colored bar on one edge; use --accent-wash for a chosen row. Because the bar reads as a status nobody defined.
+  - Wrong: `<div className="border-s-4 border-accent">`
 - anti-slop-no-decoration NEVER Add a gradient, blob, texture, grid or dot background, glass blur, or a glow beyond the sanctioned ones. Because decoration competes with the one glowing action, which is the only light Lime allows.
+  - Wrong: `<div className="bg-gradient-to-br from-accent to-surface backdrop-blur">`
 - anti-slop-sticky-edge MUST Give a sticky header a --line bottom edge once content scrolls under it, and none at the top. Because without the edge, scrolled text slides under the title with nothing to say where the header ends.
 - anti-slop-icon-first-line MUST Align a leading icon to the first line of its text, not the middle of a block that wraps. Because a centered icon drifts away from the line it labels once the text runs to two lines.
 - anti-slop-no-small-prose NEVER Set a sentence the person must read, such as a fee or a limit, in text-xs or --fg-3; use text-sm in --fg or --fg-2. A FieldDescription hint is the exception. Because small grey text fails people reading in sunlight or with low vision, and a sentence is meant to be read.
+  - Wrong: `<p className="text-xs text-fg-3">Transfers over $1,000 take one extra day to arrive.</p>`
 - anti-slop-peer-amounts MUST Set amounts that are peers, such as the rows of one list, at one size and weight. Because a bigger or bolder peer reads as more important when it is not.
 - anti-slop-no-caps NEVER Set text in capitals or spread its letters out; keep sentence case. Because capitals are slower to read and shout.
+  - Wrong: `<span className="uppercase tracking-widest">Queued</span>`
 - anti-slop-no-hype NEVER Write instant, secure, effortless, seamless or invented urgency such as Only 2 hours left; say what happens and when. Because people trust an app that states the fact, and hype reads as a sales pitch over their money.
+  - Wrong: `Instant, secure transfers. Act now!`
 - anti-slop-no-emoji NEVER Use emoji in copy, titles, buttons or as icons; use words and the Icon set. Because emoji render differently on every device and turn a money app into a chat thread.
+  - Wrong: `<Button>Send 💸</Button>`
 - anti-slop-no-fake-data SHOULD Fill examples with believable data: real-looking names, amounts with cents, dates near today; never Lorem ipsum, John Doe or $1,234.56. Because placeholder data hides truncation and alignment problems that real data shows at once.
 - anti-slop-no-stream-effects NEVER Blink a cursor, sweep a shimmer or fade in each word of a streamed answer; let the text arrive as it is. Because the effect slows reading and makes the layout jitter while the person tries to read.
+  - Wrong: `<span className="animate-pulse">▍</span>`
 - anti-slop-no-scroll-reveal NEVER Fade, slide or scale content in as it scrolls into view. Because content that hides until scrolled is missed, and motion that answers nothing is decoration.
+  - Wrong: `<motion.section whileInView={{opacity: 1, y: 0}}>`
 - anti-slop-dialog-controlled MUST Open a Dialog, Sheet or AlertDialog with open and onOpenChange; never mount it only while open. Because a dialog that unmounts skips its exit motion and loses the trigger it returns focus to.
 - anti-slop-keep-one-glow MUST Keep one glowing primary action on every view while removing the rest; never flatten a screen to grey. Because Lime without its one lime action is a grey page with nowhere to go next.
 
@@ -98,9 +111,10 @@ Not in the system yet, and what to build meanwhile.
 ## Imports
 - `import {ListItemMenu} from '@/components/lime/ui/list-item-menu'`: A row's other actions behind a more button, for ListItem's menu.
 - `import {Collapsible, CollapsibleTrigger, CollapsibleContent} from '@/components/lime/ui/collapsible'`: One section that opens and closes, the base of the Why? in Approval request.
-- `import {cn} from '@/lib/lime/utils'`: cn, which merges class names and knows Lime's radius and shadow names.
+- `import {cn, mergeClass} from '@/lib/lime/utils'`: cn, which merges class names and knows Lime's radius and shadow names, and mergeClass, which keeps Lime's classes when className is a function of state.
 - `import {Icon} from '@/components/lime/icon'`: The one import point for Carbon icons.
 - `import {LimePortalProvider, useLimePortal} from '@/lib/lime/portal'`: Puts overlays inside the .lime scope so they keep its tokens.
+- `import {useFocusWhenReplaced} from '@/lib/lime/use-focus-when-replaced'`: Moves focus to an outcome when the buttons that had it are replaced, so a keyboard user is not dropped to the top.
 - `import {popupClass, itemClass, groupLabelClass, separatorClass} from '@/lib/lime/popup'`: The panel, item and separator classes every floating list shares.
 
 ## Icons
@@ -116,7 +130,7 @@ The closed list. Colors are utilities named after the role (bg-surface, text-fg-
 - Accent: --accent, --accent-hover, --accent-active, --accent-wash, --accent-line, --ring
 - Status: --success, --success-tint, --success-text, --warn, --warn-tint, --warn-text, --danger, --danger-hover, --danger-tint, --on-danger, --danger-text
 - Elevation: --shadow-ink, --shadow-card, --shadow-menu, --shadow-overlay, --thumb, --switch-on, --switch-on-thumb, --shadow-thumb
-- Glow: 42 tokens read only through their classes and components; never by name.
+- Glow: 37 tokens read only through their classes and components; never by name.
 - Type: --font-sans, --font-mono, --text-xs, --text-sm, --text-base, --text-lg, --text-xl, --text-2xl, --text-3xl, --leading-tight, --leading-snug, --leading-normal, --tracking-tight, --weight-normal, --weight-medium, --weight-semibold
 - Size: --control-sm, --control-md, --control-lg
 - Radius: --radius-sm, --radius-md, --radius-field, --radius-panel, --radius-sheet, --radius-control
@@ -154,7 +168,7 @@ The closed list. Colors are utilities named after the role (bg-surface, text-fg-
 - [Table](https://design.how/systems/lime/components/table.md): Rows of transactions you scan across, with amounts at the end. `import {Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption} from '@/components/lime/ui/table'`
 - [List](https://design.how/systems/lime/components/list.md): Rows of transactions, accounts or settings, each with a mark, a title and a value or a chevron. `import {List, ListItem, ListIcon, listVariants} from '@/components/lime/ui/list'`
 - [Progress](https://design.how/systems/lime/components/progress.md): How far a goal has come, such as $640 of $1,000 saved, as a bar or a ring. `import {Progress} from '@/components/lime/ui/progress'`
-- [Amount](https://design.how/systems/lime/components/amount.md): A money amount with its sign, currency and tabular figures. `import {Amount, amountAffordability, formatAmount, spokenAmount, amountVariants} from '@/components/lime/ui/amount'`
+- [Amount](https://design.how/systems/lime/components/amount.md): A money amount with its sign, currency and tabular figures. `import {Amount, amountAffordability, formatAmount, spokenAmount, toMoney, amountVariants} from '@/components/lime/ui/amount'`
 - [Bill schedule](https://design.how/systems/lime/components/bill-schedule.md): The bills coming up in date order, each under a date tile, with who pays it. `import {BillSchedule} from '@/components/lime/ui/bill-schedule'`
 - [Balance](https://design.how/systems/lime/components/balance.md): The amount left in an account, kept in the header. `import {Balance, balanceVariants} from '@/components/lime/ui/balance'`
 
@@ -213,4 +227,4 @@ Whole screens built only from the components above. Each installs to the blocks 
 - [Anti-slop](https://design.how/systems/lime/foundations/anti-slop.md): The habits of generated UI to avoid, and what to do instead.
 
 ## Add a component
-npx shadcn@latest add https://design.how/r/lime/<name>.json, the name being the last part of its page link.
+`npx shadcn@latest add https://design.how/r/lime/<name>.json`, the name being the last part of its page link.

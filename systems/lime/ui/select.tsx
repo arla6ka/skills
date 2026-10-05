@@ -5,7 +5,7 @@ import {cva, type VariantProps} from 'class-variance-authority';
 import {Checkmark, ChevronDown, Icon} from '../icon';
 import {useLimePortal} from '../lib/portal';
 import {groupLabelClass, itemClass, popupClass} from '../lib/popup';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
 
 // One choice from a list in a popup. The trigger looks like an Input with a caret; the popup is the same
 // white panel every list uses. Pass `items` to Select so the trigger can show the chosen label before the
@@ -14,9 +14,9 @@ import {cn} from '../lib/utils';
 
 const triggerVariants = cva(
   [
-    'group/select-trigger flex w-fit min-w-40 items-center justify-between gap-2 rounded-field border border-line-strong bg-field ps-3 pe-2.5 text-start whitespace-nowrap text-fg outline-none select-none',
+    'group/select-trigger flex w-fit min-w-40 items-center justify-between gap-2 rounded-field border border-line-strong bg-field ps-3 pe-2.5 text-start whitespace-nowrap text-fg select-none',
     'transition-[border-color] duration-(--dur-instant) ease-out hover:not-data-disabled:not-aria-invalid:border-control data-popup-open:not-aria-invalid:border-accent-line',
-    'focus-visible:border-accent-line focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-0 focus-visible:outline-ring',
+    'focus-visible:border-accent-line focus-visible:outline-offset-0',
     'aria-invalid:border-danger data-disabled:cursor-not-allowed data-disabled:bg-surface-2 data-disabled:text-fg-disabled',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
   ],
@@ -37,7 +37,7 @@ function SelectGroup({className, ...props}: SelectPrimitive.Group.Props) {
 }
 
 function SelectLabel({className, ...props}: SelectPrimitive.GroupLabel.Props) {
-  return <SelectPrimitive.GroupLabel data-slot="select-label" className={typeof className === 'function' ? className : cn(groupLabelClass, className)} {...props}/>;
+  return <SelectPrimitive.GroupLabel data-slot="select-label" className={mergeClass(groupLabelClass, className)} {...props}/>;
 }
 
 type SelectTriggerProps = SelectPrimitive.Trigger.Props & VariantProps<typeof triggerVariants> & {
@@ -47,7 +47,7 @@ type SelectTriggerProps = SelectPrimitive.Trigger.Props & VariantProps<typeof tr
 
 function SelectTrigger({className, size, placeholder, children, ...props}: SelectTriggerProps) {
   return (
-    <SelectPrimitive.Trigger data-slot="select-trigger" className={typeof className === 'function' ? className : cn(triggerVariants({size}), className)} {...props}>
+    <SelectPrimitive.Trigger data-slot="select-trigger" className={mergeClass(triggerVariants({size}), className)} {...props}>
       {children ?? <SelectPrimitive.Value placeholder={placeholder} className="min-w-0 truncate data-placeholder:text-fg-3"/>}
       <SelectPrimitive.Icon className="shrink-0 text-fg-3 transition-transform duration-(--dur-fast) group-data-popup-open/select-trigger:rotate-180"><Icon icon={ChevronDown} size={16}/></SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
@@ -59,7 +59,7 @@ function SelectContent({className, children, ...props}: SelectPrimitive.Popup.Pr
   return (
     <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Positioner sideOffset={6} alignItemWithTrigger={false} collisionPadding={8} className="isolate z-(--z-popover) outline-none">
-        <SelectPrimitive.Popup data-slot="select-content" className={typeof className === 'function' ? className : cn(popupClass, className)} {...props}>
+        <SelectPrimitive.Popup data-slot="select-content" className={mergeClass(popupClass, className)} {...props}>
           <SelectPrimitive.List className="max-h-(--popup-max,20rem) overflow-y-auto overscroll-contain">{children}</SelectPrimitive.List>
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
@@ -69,7 +69,7 @@ function SelectContent({className, children, ...props}: SelectPrimitive.Popup.Pr
 
 function SelectItem({className, children, ...props}: SelectPrimitive.Item.Props) {
   return (
-    <SelectPrimitive.Item data-slot="select-item" className={typeof className === 'function' ? className : cn(itemClass, className)} {...props}>
+    <SelectPrimitive.Item data-slot="select-item" className={mergeClass(itemClass, className)} {...props}>
       <SelectPrimitive.ItemText className="min-w-0 truncate">{children}</SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator className="absolute end-2 flex size-4 items-center justify-center"><Icon icon={Checkmark} size={16}/></SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>

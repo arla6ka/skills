@@ -4,7 +4,7 @@ import {Dialog as DialogPrimitive} from '@base-ui/react/dialog';
 import {cva, type VariantProps} from 'class-variance-authority';
 import {Close, Icon} from '../icon';
 import {useLimePortal} from '../lib/portal';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 import {Button} from './button';
 
 // A focused task that takes over the screen: rename a goal, pick a plan, send money. The page stays
@@ -55,7 +55,7 @@ function DialogContent({className, size, showClose = true, children, ...props}: 
   return (
     <DialogPrimitive.Portal container={container}>
       <DialogPrimitive.Backdrop data-slot="dialog-backdrop" className={backdropClass}/>
-      <DialogPrimitive.Popup data-slot="dialog-content" className={typeof className === 'function' ? className : cn(dialogVariants({size}), className)} {...props}>
+      <DialogPrimitive.Popup data-slot="dialog-content" className={mergeClass(dialogVariants({size}), className)} {...props}>
         {children}
         {showClose && (
           <DialogPrimitive.Close render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="absolute end-3 top-3"/>}>
@@ -76,11 +76,11 @@ function DialogFooter({className, ...props}: React.ComponentProps<'div'>) {
 }
 
 function DialogTitle({className, ...props}: DialogPrimitive.Title.Props) {
-  return <DialogPrimitive.Title data-slot="dialog-title" className={typeof className === 'function' ? className : cn('title-overlay', className)} {...props}/>;
+  return <DialogPrimitive.Title data-slot="dialog-title" className={mergeClass('title-overlay', className)} {...props}/>;
 }
 
 function DialogDescription({className, ...props}: DialogPrimitive.Description.Props) {
-  return <DialogPrimitive.Description data-slot="dialog-description" className={typeof className === 'function' ? className : cn('text-sm text-fg-2', className)} {...props}/>;
+  return <DialogPrimitive.Description data-slot="dialog-description" className={mergeClass('text-sm text-fg-2', className)} {...props}/>;
 }
 
 function DialogClose(props: DialogPrimitive.Close.Props) {

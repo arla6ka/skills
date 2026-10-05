@@ -2,7 +2,7 @@
 
 import {Popover as PopoverPrimitive} from '@base-ui/react/popover';
 import {useLimePortal} from '../lib/portal';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
 
 // A small floating panel anchored to its trigger, holding content a person can interact with: a filter, a
 // share link, a short form. It opens on click, closes on Escape or an outside press and returns focus to
@@ -25,12 +25,11 @@ function PopoverContent({className, side = 'bottom', align = 'center', sideOffse
       <PopoverPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} alignOffset={alignOffset} collisionPadding={8} className="isolate z-(--z-popover)">
         <PopoverPrimitive.Popup
           data-slot="popover-content"
-          className={typeof className === 'function' ? className : cn(
+          className={mergeClass([
             'flex w-72 max-w-(--available-width) origin-(--transform-origin) flex-col gap-3 rounded-panel bg-raised p-4 text-sm text-fg shadow-menu outline-none',
             'transition-[opacity,scale] duration-(--dur-base) ease-(--ease-out)',
             'data-starting-style:scale-(--scale-enter) data-starting-style:opacity-0 data-ending-style:scale-(--scale-enter) data-ending-style:opacity-0 data-ending-style:duration-(--dur-fast)',
-            className,
-          )}
+          ], className)}
           {...props}
         />
       </PopoverPrimitive.Positioner>
@@ -39,11 +38,11 @@ function PopoverContent({className, side = 'bottom', align = 'center', sideOffse
 }
 
 function PopoverTitle({className, ...props}: PopoverPrimitive.Title.Props) {
-  return <PopoverPrimitive.Title data-slot="popover-title" className={typeof className === 'function' ? className : cn('text-base leading-tight font-semibold', className)} {...props}/>;
+  return <PopoverPrimitive.Title data-slot="popover-title" className={mergeClass('text-base leading-tight font-semibold', className)} {...props}/>;
 }
 
 function PopoverDescription({className, ...props}: PopoverPrimitive.Description.Props) {
-  return <PopoverPrimitive.Description data-slot="popover-description" className={typeof className === 'function' ? className : cn('text-sm text-fg-2', className)} {...props}/>;
+  return <PopoverPrimitive.Description data-slot="popover-description" className={mergeClass('text-sm text-fg-2', className)} {...props}/>;
 }
 
 function PopoverClose(props: PopoverPrimitive.Close.Props) {

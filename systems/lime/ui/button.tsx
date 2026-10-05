@@ -3,7 +3,7 @@
 import {Button as ButtonPrimitive} from '@base-ui/react/button';
 import {cva, type VariantProps} from 'class-variance-authority';
 import type {ReactNode} from 'react';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 
 // Lime's button. Base UI Button underneath, cva variants on top, a pill by default.
 // primary is the lime and is the one main action on a screen. solid is the ink fill for the action beside
@@ -57,7 +57,7 @@ const buttonVariants = cva(
 /** A three quarter arc turning once. The only looping motion in Lime. */
 function Spinner({className, size = 16}: {className?: string; size?: number}) {
   return (
-    <svg data-slot="spinner" viewBox="0 0 16 16" width={size} height={size} fill="none" aria-hidden="true" className={cn('animate-spin motion-reduce:animate-spin', className)}>
+    <svg data-slot="spinner" viewBox="0 0 16 16" width={size} height={size} fill="none" aria-hidden="true" className={cn('animate-spin', className)}>
       <circle cx="8" cy="8" r="6" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2"/>
       <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     </svg>
@@ -78,7 +78,8 @@ function Button({className, variant, size, pending, icon, disabled, children: co
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={typeof className === 'function' ? state => cn(buttonVariants({variant, size}), className(state)) : cn(buttonVariants({variant, size}), className)}
+      data-variant={variant ?? 'primary'}
+      className={mergeClass(buttonVariants({variant, size}), className)}
       disabled={disabled || pending}
       focusableWhenDisabled={pending ? true : props.focusableWhenDisabled}
       aria-busy={pending || undefined}

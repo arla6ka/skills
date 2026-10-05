@@ -1,8 +1,9 @@
 'use client';
 
-import {useEffect, useRef, useState} from 'react';
+import {useState} from 'react';
 import {Message} from '../ai/message';
 import {Icon, Locked, Play, ShoppingBag} from '../icon';
+import {useFocusWhenReplaced} from '../lib/use-focus-when-replaced';
 import {Amount, formatAmount} from '../ui/amount';
 import {Button} from '../ui/button';
 import {List, ListIcon, ListItem} from '../ui/list';
@@ -31,11 +32,8 @@ export function UnusualCharge() {
  * works for a moment, then the buttons give way to a status line in the same height. */
 export function CancelSubscription() {
   const [state, setState] = useState<'open' | 'pending' | 'canceled' | 'kept'>('open');
-  const outcome = useRef<HTMLSpanElement>(null);
   // The pressed button is gone once the status shows, so focus moves to the status instead of the page top.
-  useEffect(() => {
-    if ((state === 'canceled' || state === 'kept') && document.activeElement === document.body) outcome.current?.focus();
-  }, [state]);
+  const {region, target: outcome} = useFocusWhenReplaced(state === 'canceled' || state === 'kept');
   const cancel = () => {
     setState('pending');
     setTimeout(() => setState('canceled'), 900);
@@ -46,9 +44,9 @@ export function CancelSubscription() {
       <List className="-mx-4">
         <ListItem leading={<ListIcon icon={Play}/>} title="Streamly" description="Renews Oct 12" trailing={formatAmount(-15.99)}/>
       </List>
-      <div aria-live="polite" className="flex min-h-(--control-md) items-center gap-2">
-        {state === 'canceled' ? <Status ref={outcome} tabIndex={-1} status="canceled" label="Canceled. No more charges" className="rounded-sm"/>
-          : state === 'kept' ? <Status ref={outcome} tabIndex={-1} status="done" label="Kept" className="rounded-sm"/>
+      <div ref={region} aria-live="polite" className="flex min-h-(--control-md) items-center gap-2">
+        {state === 'canceled' ? <Status ref={outcome} focusable status="canceled" label="Canceled. No more charges"/>
+          : state === 'kept' ? <Status ref={outcome} focusable status="done" label="Kept"/>
           : <>
             <Button className="flex-1" pending={state === 'pending'} onClick={cancel}>Cancel it</Button>
             <Button variant="ghost" disabled={state === 'pending'} onClick={() => setState('kept')}>Keep</Button>

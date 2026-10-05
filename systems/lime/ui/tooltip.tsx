@@ -2,7 +2,7 @@
 
 import {Tooltip as TooltipPrimitive} from '@base-ui/react/tooltip';
 import {useLimePortal} from '../lib/portal';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
 
 // A short label for a control, shown on hover and keyboard focus. One line of plain text in sentence case,
 // such as "Copy link". Never put a link, a button or a second sentence in it; use Popover for that.
@@ -30,11 +30,10 @@ function TooltipContent({className, side = 'top', align = 'center', sideOffset =
       <TooltipPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} collisionPadding={8} className="isolate z-(--z-popover)">
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
-          className={typeof className === 'function' ? className : cn(
+          className={mergeClass([
             'max-w-64 origin-(--transform-origin) rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium text-fg-inverse break-words',
             'transition-[opacity,scale] duration-(--dur-fast) ease-out data-starting-style:scale-(--scale-enter) data-starting-style:opacity-0 data-ending-style:opacity-0 data-instant:duration-0',
-            className,
-          )}
+          ], className)}
           {...props}
         />
       </TooltipPrimitive.Positioner>

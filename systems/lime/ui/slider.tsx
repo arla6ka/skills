@@ -2,7 +2,7 @@
 
 import {Slider as SliderPrimitive} from '@base-ui/react/slider';
 import {useMemo} from 'react';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 
 // A value on a range, set by dragging or by arrow keys. One thumb, or two for a range. The fill is the
 // lime with an olive edge, the thumb is a white disc with an ink ring, so the value reads without colour.
@@ -22,7 +22,7 @@ function Slider({className, defaultValue, value, min = 0, max = 100, thumbLabels
   return (
     <SliderPrimitive.Root
       data-slot="slider"
-      className={typeof className === 'function' ? className : cn('flex w-full items-center gap-3', className)}
+      className={mergeClass('flex w-full items-center gap-3', className)}
       defaultValue={defaultValue}
       value={value}
       min={min}

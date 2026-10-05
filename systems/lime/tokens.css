@@ -36,18 +36,18 @@
   --scrim: rgb(15 15 13 / 0.5); /* the layer behind a dialog or sheet | dialog, sheet */
 
   /* == Text == */
-  --fg: #0f0f0d; /* primary text, 17.6:1 on the grey surface | headings, body, labels */
-  --fg-2: #4a4943; /* secondary text, 9.0:1 on the page | descriptions, table cells */
-  --fg-3: #6b6a63; /* supporting text and icons, 5.4:1 on the page and 5.0:1 on grey | hints, captions, placeholders */
+  --fg: #0f0f0d; /* primary text, 17.6:1 on --surface | headings, body, labels */
+  --fg-2: #4a4943; /* secondary text, 9.0:1 on --page | descriptions, table cells */
+  --fg-3: #6b6a63; /* supporting text and icons, 5.4:1 on --page and 5.0:1 on --surface | hints, captions, placeholders */
   --fg-disabled: #a6a49b; /* a disabled label; no contrast claim | disabled controls */
   --fg-inverse: #ffffff; /* text on the solid ink fill | solid button, tooltip, toast */
-  --on-accent: #0f0f0d; /* text and icons on the lime, 15.6:1 on the mark, in both themes | primary button, selected chip */
-  --glow-accent-fg: #0f0f0d; /* text and icons on the lime glow: ink on the bright light-theme body, white on the deep dark one | primary button, balance chip, featured card */
+  --on-accent: #0f0f0d; /* text and icons on the lime in both themes, 15.6:1 on --accent | primary button, selected chip */
+  --glow-accent-fg: #0f0f0d; /* text and icons on the lime glow: ink, on the light body and the calmer dark one alike (Customize turns it white for a picked hue whose dark body runs deep) | primary button, balance chip, featured card */
 
   /* == Lines == */
   --line: #e6e4df; /* a hairline between things; decorative | card edge, divider, table rule */
   --line-strong: #cfcdc6; /* a hairline that must read a little more | field edge, hovered edge */
-  --control: #85827a; /* the outline of a control, 3.8:1 on the page, 3.5:1 on grey and 3.3:1 on the second grey, all over the 3:1 of WCAG 1.4.11; darkened one step from #8f8c84, which was 2.9:1 on the second grey | checkbox, radio, switch off, slider thumb */
+  --control: #85827a; /* the outline of a control, 3.8:1 on --page, 3.5:1 on --surface and 3.3:1 on --surface-2, all over the minimum of WCAG 1.4.11; darkened one step from #8f8c84, which fell under it on --surface-2 | checkbox, radio, switch off, slider thumb */
 
   /* == Solid ink == */
   --ink: #0f0f0d; /* the ink fill: the second action beside the lime | solid button, tooltip, toast */
@@ -55,25 +55,25 @@
   --ink-active: #3f3f3a; /* ink pressed | solid button */
 
   /* == Accent: acid lime == */
-  --accent: #e4f222; /* the mark: the fill of a primary action, black text 15.6:1 | primary button, selected segment, switch on, slider fill, progress */
-  --accent-hover: #d6e41a; /* the mark on hover, black text 13.7:1 | primary button */
-  --accent-active: #c4d211; /* the mark pressed, black text 11.5:1 | primary button */
-  --accent-wash: #f5f9c4; /* a soft highlight, ink 17.5:1 | selected row, highlighted option, the current answer */
-  --accent-line: #7c8700; /* olive line step, 3.95:1 on the page and 3.62:1 on grey | focus ring, outline, icon on white */
+  --accent: #e4f222; /* the mark: the fill of a primary action, 15.6:1 with --on-accent | primary button, selected segment, switch on, slider fill, progress */
+  --accent-hover: #d6e41a; /* the mark on hover, 13.7:1 with --on-accent | primary button */
+  --accent-active: #c4d211; /* the mark pressed, 11.5:1 with --on-accent | primary button */
+  --accent-wash: #f5f9c4; /* a soft highlight, 17.6:1 with --fg | selected row, highlighted option, the current answer */
+  --accent-line: #7c8700; /* olive line step, 3.95:1 on --page and 3.62:1 on --surface | focus ring, outline, icon on white */
   --ring: var(--accent-line); /* the focus ring colour | every focus-visible state */
 
   /* == Status: three hues, each with a mark, a tint and a text step == */
-  --success: #1e8e4a; /* success mark, 4.2:1 on the page | status dot, progress done */
+  --success: #1e8e4a; /* success mark, 4.2:1 on --page | status dot, progress done */
   --success-tint: #e5f5ea; /* success wash | success badge, alert */
-  --success-text: #17703a; /* success text, 6.2:1 on the page and 5.4:1 on its tint | success label */
-  --warn: #c27a00; /* warning mark, 3.5:1 on the page | status dot */
+  --success-text: #17703a; /* success text, 6.1:1 on --page and 5.4:1 on --success-tint | success label */
+  --warn: #c27a00; /* warning mark, 3.5:1 on --page | status dot */
   --warn-tint: #fff3d6; /* warning wash | warning badge, alert */
-  --warn-text: #8a5200; /* warning text, 6.4:1 on the page and 5.8:1 on its tint | warning label */
-  --danger: #d93636; /* error fill, white text 4.6:1 | destructive button, invalid ring */
-  --danger-hover: #c02c2c; /* error fill on hover, white text 5.8:1 | destructive button */
+  --warn-text: #8a5200; /* warning text, 6.4:1 on --page and 5.8:1 on --warn-tint | warning label */
+  --danger: #d93636; /* error fill, 4.6:1 with --on-danger | destructive button, invalid ring */
+  --danger-hover: #c02c2c; /* error fill on hover, 5.8:1 with --on-danger | destructive button */
   --danger-tint: #fdebeb; /* error wash | error badge, alert */
   --on-danger: #ffffff; /* text on the error fill | destructive button */
-  --danger-text: #b42323; /* error text, 6.6:1 on the page and 5.7:1 on its tint | error message, error label */
+  --danger-text: #b42323; /* error text, 6.6:1 on --page and 5.7:1 on --danger-tint | error message, error label */
 
   /* == Elevation: a warm ink, low alpha == */
   --shadow-ink: 40 36 20; /* the shadow channel | every shadow */
@@ -123,11 +123,6 @@
   --glow-success-bloom-lit: rgb(255 255 255 / 0.24); /* the inner bloom when powered on | glow-success */
   --glow-success-from-press: #0f5a2b; /* top while pressed, white text 6.5:1 at the worst point | glow-success */
   --glow-success-to-press: #157038; /* bottom while pressed | glow-success */
-  --glow-cast-alpha: 0.3; /* the outer cast strength | every glow */
-  --glow-accent-halo: 214 236 30; /* the soft lime light the body spills around itself, an RGB triplet | glow-accent */
-  --glow-danger-halo: 210 50 50; /* the same spill for the red body | glow-danger */
-  --glow-success-halo: 30 150 80; /* the same spill for the green body | glow-success */
-  --glow-halo-alpha: 0.45; /* how strong the spill is | every glow */
 
   /* == Type == */
   --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; /* every word | all text */
@@ -199,25 +194,25 @@
   --field: #1a1a17;
   --scrim: rgb(0 0 0 / 0.64);
 
-  --fg: #f4f3ee; /* 15.7:1 on the dark surface */
+  --fg: #f4f3ee; /* 15.7:1 on --surface */
   --fg-2: #c9c7be;
-  --fg-3: #9a9890; /* 5.3:1 on the second surface */
+  --fg-3: #9a9890; /* 5.3:1 on --surface-2 */
   --fg-disabled: #5e5d57;
   --fg-inverse: #0f0f0d;
   --on-accent: #0f0f0d;
 
   --line: #2e2e29;
   --line-strong: #3f3f39;
-  --control: #8a8880; /* 4.9:1 on the dark surface */
+  --control: #8a8880; /* 4.9:1 on --surface */
 
   --ink: #f4f3ee;
   --ink-hover: #e1dfd7;
   --ink-active: #cfcdc4;
 
-  --accent: #cad649; /* the lime a step calmer for a dark page: 12.2:1 on it, black text 12.1:1 on the lime */
+  --accent: #cad649; /* the lime a step calmer for a dark page: 12.2:1 on --page, 12.1:1 with --on-accent */
   --accent-hover: #d6e262;
   --accent-active: #bac534;
-  --accent-wash: #2b2e0c; /* ink 12.6:1 */
+  --accent-wash: #2b2e0c; /* 12.6:1 with --fg */
   --accent-line: #cad649; /* the line step is the mark on dark */
   /* A switch's white knob on the lime needs a little more lift on a dark page. */
   --shadow-thumb: 0 2px 5px rgb(0 0 0 / 0.22), 0 1px 1px rgb(0 0 0 / 0.16), 0 0 0 0.5px rgb(0 0 0 / 0.2);
@@ -254,8 +249,6 @@
   --glow-accent-bloom: rgb(255 255 255 / 0.12);
   --glow-accent-edge-lit: rgb(255 255 255 / 0.45);
   --glow-accent-bloom-lit: rgb(255 255 255 / 0.18);
-  --glow-accent-halo: 158 168 39;
-  --glow-halo-alpha: 0.28;
   --glow-danger-from: #da474c; /* black text 4.9:1 at the worst point */
   --glow-danger-to: #f36a6f;
   --glow-danger-edge: rgb(255 255 255 / 0.5);
@@ -281,7 +274,6 @@
   --glow-success-bloom-lit: rgb(255 255 255 / 0.3);
   --glow-success-from-press: #1f8f4d; /* black text 5.3:1 */
   --glow-success-to-press: #43bf74;
-  --glow-cast-alpha: 0.5;
 }
 
 /* Reduced motion zeroes every duration except the spinner, which is the only signal that work is running. */

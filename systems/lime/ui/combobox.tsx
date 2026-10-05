@@ -4,7 +4,7 @@ import {Combobox as ComboboxPrimitive} from '@base-ui/react/combobox';
 import {Checkmark, ChevronDown, Close, Icon} from '../icon';
 import {useLimePortal} from '../lib/portal';
 import {itemClass, popupClass} from '../lib/popup';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
 import {fieldControl} from './input';
 
 // A text field with a list under it: type to narrow, arrow to move, Enter to choose. Use it when the list
@@ -26,7 +26,7 @@ function ComboboxInput({className, hideTrigger, showClear, ...props}: ComboboxIn
     <ComboboxPrimitive.InputGroup data-slot="combobox-input-group" className="relative flex w-full items-center">
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
-        className={typeof className === 'function' ? className : cn(fieldControl(), 'text-ellipsis', hideTrigger ? '' : 'pe-16', className)}
+        className={mergeClass([fieldControl(), 'text-ellipsis', hideTrigger ? '' : 'pe-16'], className)}
         {...props}
       />
       <span className="absolute inset-y-0 end-1.5 flex items-center gap-0.5">
@@ -50,7 +50,7 @@ function ComboboxContent({className, children, ...props}: ComboboxPrimitive.Popu
   return (
     <ComboboxPrimitive.Portal container={container}>
       <ComboboxPrimitive.Positioner sideOffset={6} collisionPadding={8} className="isolate z-(--z-popover) outline-none">
-        <ComboboxPrimitive.Popup data-slot="combobox-content" className={typeof className === 'function' ? className : cn(popupClass, 'w-(--anchor-width)', className)} {...props}>
+        <ComboboxPrimitive.Popup data-slot="combobox-content" className={mergeClass([popupClass, 'w-(--anchor-width)'], className)} {...props}>
           {children}
         </ComboboxPrimitive.Popup>
       </ComboboxPrimitive.Positioner>
@@ -59,12 +59,12 @@ function ComboboxContent({className, children, ...props}: ComboboxPrimitive.Popu
 }
 
 function ComboboxList({className, ...props}: ComboboxPrimitive.List.Props) {
-  return <ComboboxPrimitive.List data-slot="combobox-list" className={typeof className === 'function' ? className : cn('max-h-72 overflow-y-auto overscroll-contain data-empty:hidden', className)} {...props}/>;
+  return <ComboboxPrimitive.List data-slot="combobox-list" className={mergeClass('max-h-72 overflow-y-auto overscroll-contain data-empty:hidden', className)} {...props}/>;
 }
 
 function ComboboxItem({className, children, ...props}: ComboboxPrimitive.Item.Props) {
   return (
-    <ComboboxPrimitive.Item data-slot="combobox-item" className={typeof className === 'function' ? className : cn(itemClass, className)} {...props}>
+    <ComboboxPrimitive.Item data-slot="combobox-item" className={mergeClass(itemClass, className)} {...props}>
       <span className="min-w-0 truncate">{children}</span>
       <ComboboxPrimitive.ItemIndicator className="absolute end-2 flex size-4 items-center justify-center"><Icon icon={Checkmark} size={16}/></ComboboxPrimitive.ItemIndicator>
     </ComboboxPrimitive.Item>
@@ -72,7 +72,7 @@ function ComboboxItem({className, children, ...props}: ComboboxPrimitive.Item.Pr
 }
 
 function ComboboxEmpty({className, ...props}: ComboboxPrimitive.Empty.Props) {
-  return <ComboboxPrimitive.Empty data-slot="combobox-empty" className={typeof className === 'function' ? className : cn('px-3 py-3 text-sm text-fg-3 empty:hidden', className)} {...props}/>;
+  return <ComboboxPrimitive.Empty data-slot="combobox-empty" className={mergeClass('px-3 py-3 text-sm text-fg-3 empty:hidden', className)} {...props}/>;
 }
 
 export {Combobox, ComboboxInput, ComboboxContent, ComboboxList, ComboboxItem, ComboboxEmpty};

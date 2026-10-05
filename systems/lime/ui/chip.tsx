@@ -2,7 +2,7 @@
 
 import {Toggle as TogglePrimitive} from '@base-ui/react/toggle';
 import {Checkmark, Close, Icon} from '../icon';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 
 // Something the person acts on: a filter, a topic, a model to pick. Chosen takes the soft lime wash, an
 // olive edge and a check that appears in front of the label (the chip grows by the check's width), so it reads without colour. Badge is the static one. With `onRemove` the chip
@@ -25,7 +25,7 @@ function Chip({className, onRemove, removeLabel = 'Remove', children, ...props}:
   const toggle = (
     <TogglePrimitive
       data-slot="chip"
-      className={typeof className === 'function' ? state => cn(chipClass, onRemove && 'rounded-e-none border-e-0 pe-2', className(state)) : cn(chipClass, onRemove && 'rounded-e-none border-e-0 pe-2', className)}
+      className={mergeClass([chipClass, onRemove && 'rounded-e-none border-e-0 pe-2'], className)}
       {...props}
     >
       <Icon icon={Checkmark} size={16} data-slot="chip-check" className="hidden group-data-pressed/chip:block"/>
