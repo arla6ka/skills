@@ -25,7 +25,7 @@ Contents
 
 ## The model to study
 
-Geist, Vercel's design system, is the reference shape. Study it when you have internet access.
+Geist is the reference shape. Study it when you have internet access.
 
 - Introduction: https://vercel.com/geist/introduction
 - A foundation page: https://vercel.com/geist/colors, https://vercel.com/geist/typography, https://vercel.com/geist/materials, https://vercel.com/geist/grid

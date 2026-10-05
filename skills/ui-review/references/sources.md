@@ -22,7 +22,7 @@ An app may run on a design system installed from a registry: a `SKILL.md` in `.c
 
 ## The project's lint
 
-Run the project's design lint first: an installed design system's lint config (`<name>.eslint.config.mjs` at the root, run as its skill says), or the lint the project already has (`npm run lint`, or the linter its config names), on the scoped files. Record the command and exit code in the Review record. A design lint covers raw colors, arbitrary values and restyled components, so read its output before capturing and look for those on screen. A lint finding points the probes at a file. It becomes a ranked finding only with a render that shows it, and the rest stay in the Review record with the lint's rule names. With no lint, write `lint: none`.
+Run the project's design lint first: an installed design system's lint config (`<name>.<tool>lint.config.mjs` at the root, run as its skill says), or the lint the project already has (`npm run lint`, or the linter its config names), on the scoped files. Record the command and exit code in the Review record. A design lint covers raw colors, arbitrary values and restyled components, so read its output before capturing and look for those on screen. A lint finding points the probes at a file. It becomes a ranked finding only with a render that shows it, and the rest stay in the Review record with the lint's rule names. With no lint, write `lint: none`.
 
 ## Inferring the purpose
 

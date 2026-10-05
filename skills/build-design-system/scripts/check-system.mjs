@@ -117,8 +117,8 @@ Config keys (all optional, JSON)
   projectLint    "auto": skip the four rules a design lint also enforces
                  (rule/raw-value, rule/palette-use, rule/arbitrary-value,
                  rule/component-override) when the project runs one: an
-                 installed design system's <name>.eslint.config.* at the root,
-                 or an ESLint or Oxlint config that loads a design-system lint.
+                 installed design system's <name>.<tool>lint.config.* at the
+                 root, or a root lint config that loads a design-system lint.
                  false runs them here anyway, true skips them  "auto"
 
 Allowlist: {"<file>": {"<rule>": {"<literal>": <count>}}}. A count may instead be
@@ -477,8 +477,9 @@ function loadConfig(root, file, override) {
 
 const UI_DIRS = ["components/ui", "src/components/ui", "src/ui", "ui"];
 const PROJECT_LINT_RULES = ["rule/raw-value", "rule/palette-use", "rule/arbitrary-value", "rule/component-override"];
-const LINT_CONFIGS = ["eslint.config.js", "eslint.config.mjs", "eslint.config.cjs", "eslint.config.ts", "eslint.config.mts", "eslint.config.cts", ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc.yml", ".eslintrc.yaml", ".oxlintrc.json"];
-const SYSTEM_LINT_CONFIG = /^([a-z0-9][\w-]*)\.eslint\.config\.(?:[cm]?js|[cm]?ts)$/i;
+// A linter's config at the root, by name shape: <tool>lint.config.<js|ts>, or a .<tool>lintrc file.
+const LINT_CONFIG = /^(?:[a-z]*lint\.config\.[cm]?[jt]s|\.[a-z]*lintrc(?:\.(?:[cm]?js|json|ya?ml))?)$/i;
+const SYSTEM_LINT_CONFIG = /^([a-z0-9][\w-]*)\.[a-z]*lint\.config\.[cm]?[jt]s$/i;
 
 // Design systems installed in the project: a folder in components/ (or src/components/), or a skill in
 // .claude/skills/<name>/ or .agents/skills/<name>/, as a registry install leaves them.
@@ -491,7 +492,7 @@ function installedSystems(cfg) {
 }
 
 // Where the project runs a design lint, as the file that turns it on, or null. Either an installed system's own
-// lint config at the root (<name>.eslint.config.mjs beside components/<name>/), or the project's ESLint or Oxlint
+// lint config at the root (<name>.<tool>lint.config.mjs beside components/<name>/), or the project's own lint
 // config loading one: an installed system's config or its lint plugin (lib/<name>/lint/), or a package named for
 // design-system linting.
 function projectLintSource(cfg) {
@@ -500,8 +501,9 @@ function projectLintSource(cfg) {
     const m = SYSTEM_LINT_CONFIG.exec(e);
     if (m && systems.has(m[1])) return `${e} (${m[1]}'s lint)`;
   }
-  const loads = (text) => [...systems].some((n) => text.includes(`${n}.eslint.config`) || text.includes(`/${n}/lint/`)) || /design[-_]?system[\w@/.-]*lint|lint[\w@/.-]*design[-_]?system/i.test(text);
-  for (const f of LINT_CONFIGS) if (existsRel(cfg, f) && loads(readRel(cfg, f))) return f;
+  const loads = (text) => [...systems].some((n) => new RegExp(`(?:^|[/"'\\s])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\.[a-z]*lint\\.config`).test(text) || text.includes(`/${n}/lint/`)) || /design[-_]?system[\w@/.-]*lint|lint[\w@/.-]*design[-_]?system/i.test(text);
+  const root = readdirSync(cfg.root).map((x) => (cfg.fixtures ? unfix(x) : x)).sort();
+  for (const f of root.filter((x) => LINT_CONFIG.test(x) && !SYSTEM_LINT_CONFIG.test(x))) if (existsRel(cfg, f) && statSync(join(cfg.root, phys(cfg, f))).isFile() && loads(readRel(cfg, f))) return f;
   return null;
 }
 
@@ -1432,16 +1434,16 @@ function unitTests(dir) {
   t("summary markdown", md.includes("| `a\\|b.tsx` | 2 | `rule/raw-value` | #fff (nearest token --bg (deltaE 0.0)) |"), md.split("\n")[4] || md);
   const lintDir = realpathSync(mkdtempSync(join(tmpdir(), "check-system-lint-")));
   try {
-    writeFileSync(join(lintDir, "eslint.config.mjs"), "export default [];\n");
+    writeFileSync(join(lintDir, "xlint.config.mjs"), "export default [];\n");
     const none = loadConfig(lintDir, null, { include: ["."] });
     mkdirSync(join(lintDir, "components", "brand"), { recursive: true });
-    writeFileSync(join(lintDir, "eslint.config.mjs"), 'import brand from "./brand.eslint.config.mjs";\nexport default [...brand];\n');
+    writeFileSync(join(lintDir, "xlint.config.mjs"), 'import brand from "./brand.xlint.config.mjs";\nexport default [...brand];\n');
     const merged = loadConfig(lintDir, null, { include: ["."] });
-    writeFileSync(join(lintDir, "brand.eslint.config.mjs"), "export default [];\n");
+    writeFileSync(join(lintDir, "brand.xlint.config.mjs"), "export default [];\n");
     const lc = loadConfig(lintDir, null, { include: ["."] });
     const lo = loadConfig(lintDir, null, { include: ["."], projectLint: false });
     const skips = (c) => PROJECT_LINT_RULES.every((r) => c.off.has(r));
-    t("a design lint skips its rules", !skips(none) && skips(merged) && skips(lc) && !PROJECT_LINT_RULES.some((r) => lo.off.has(r)) && merged.notes.some((x) => /^eslint\.config\.mjs runs a design lint/.test(x)) && lc.notes.some((x) => /^brand\.eslint\.config\.mjs \(brand's lint\) runs a design lint/.test(x)), lc.notes.find((x) => /design lint/.test(x)) || "no note");
+    t("a design lint skips its rules", !skips(none) && skips(merged) && skips(lc) && !PROJECT_LINT_RULES.some((r) => lo.off.has(r)) && merged.notes.some((x) => /^xlint\.config\.mjs runs a design lint/.test(x)) && lc.notes.some((x) => /^brand\.xlint\.config\.mjs \(brand's lint\) runs a design lint/.test(x)), lc.notes.find((x) => /design lint/.test(x)) || "no note");
   } finally { rmSync(lintDir, { recursive: true, force: true }); }
   const src = join(dir, "_cli");
   if (!existsSync(src)) { t("cli fixtures", false, `missing ${src}`); return { ok, n }; }
