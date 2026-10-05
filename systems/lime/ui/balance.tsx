@@ -8,8 +8,8 @@ import {formatAmount, spokenAmount} from './amount';
 // `render` makes it a link.
 
 const balanceVariants = cva([
-  'inline-flex h-8 items-center gap-1.5 rounded-control px-3 text-sm font-medium whitespace-nowrap tabular-nums transition-[background-color,color,box-shadow,scale] duration-(--dur-instant)',
-  'active:not-disabled:scale-[0.98] motion-reduce:active:scale-100 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-fg-disabled',
+  'inline-flex h-(--control-sm) items-center gap-1.5 rounded-control px-3 text-sm font-medium whitespace-nowrap tabular-nums transition-[background-color,color,box-shadow,scale] duration-(--dur-instant)',
+  'active:not-disabled:scale-(--scale-press) disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-fg-disabled',
 ], {
   variants: {
     low: {

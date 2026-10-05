@@ -18,7 +18,7 @@ function ToolbarGroup({className, ...props}: ToolbarPrimitive.Group.Props) {
 }
 
 const itemClass = cn(
-  'inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-control px-2 text-sm font-medium whitespace-nowrap text-fg-2 select-none',
+  'inline-flex h-(--control-sm) min-w-(--control-sm) shrink-0 items-center justify-center gap-1.5 rounded-control px-2 text-sm font-medium whitespace-nowrap text-fg-2 select-none',
   'transition-[background-color,color] duration-(--dur-instant) hover:not-data-disabled:bg-surface-2 hover:not-data-disabled:text-fg',
   'data-disabled:cursor-not-allowed data-disabled:text-fg-disabled [&_svg]:shrink-0',
 );

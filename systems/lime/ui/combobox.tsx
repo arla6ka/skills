@@ -49,7 +49,7 @@ function ComboboxContent({className, children, ...props}: ComboboxPrimitive.Popu
   const container = useLimePortal();
   return (
     <ComboboxPrimitive.Portal container={container}>
-      <ComboboxPrimitive.Positioner sideOffset={6} collisionPadding={8} className="isolate z-50 outline-none">
+      <ComboboxPrimitive.Positioner sideOffset={6} collisionPadding={8} className="isolate z-(--z-popover) outline-none">
         <ComboboxPrimitive.Popup data-slot="combobox-content" className={typeof className === 'function' ? className : cn(popupClass, 'w-(--anchor-width)', className)} {...props}>
           {children}
         </ComboboxPrimitive.Popup>

@@ -25,7 +25,7 @@ function DropdownMenuContent({className, side = 'bottom', align = 'start', sideO
   const container = useLimePortal();
   return (
     <MenuPrimitive.Portal container={container}>
-      <MenuPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} alignOffset={alignOffset} collisionPadding={8} className="isolate z-50 outline-none">
+      <MenuPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} alignOffset={alignOffset} collisionPadding={8} className="isolate z-(--z-popover) outline-none">
         <MenuPrimitive.Popup data-slot="dropdown-menu-content" className={typeof className === 'function' ? className : cn(popupClass, 'min-w-44', className)} {...props}/>
       </MenuPrimitive.Positioner>
     </MenuPrimitive.Portal>

@@ -22,7 +22,7 @@ function PopoverContent({className, side = 'bottom', align = 'center', sideOffse
   const container = useLimePortal();
   return (
     <PopoverPrimitive.Portal container={container}>
-      <PopoverPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} alignOffset={alignOffset} collisionPadding={8} className="isolate z-50">
+      <PopoverPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} alignOffset={alignOffset} collisionPadding={8} className="isolate z-(--z-popover)">
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={typeof className === 'function' ? className : cn(

@@ -10,9 +10,9 @@ import {cn} from '../lib/utils';
 // glow is the one featured surface of a screen, such as an upgrade card or the plan to pick: the lime body lit
 // from inside, with near-black text. It powers up on hover only when interactive. One per view.
 //
-// interactive makes the whole card one control. With `href` it renders a link. Without, it is a button
-// role on the div: focusable, Enter and Space run onClick, and a ring shows on keyboard focus. Do not put
-// a button or link inside an interactive card (a control inside a control); use a plain card with one
+// interactive makes the whole card one control. With `href` it renders a link. Without, it renders a
+// native button (type="button"), so Enter, Space, focus and the button role come from the browser. Do not
+// put a button or link inside an interactive card (a control inside a control); use a plain card with one
 // stretched link for that.
 
 const cardVariants = cva('flex flex-col gap-4 rounded-panel p-5 text-fg', {
@@ -36,28 +36,16 @@ type CardProps = React.ComponentProps<'div'> & VariantProps<typeof cardVariants>
   href?: string;
 };
 
-function Card({className, variant, interactive, href, onKeyDown, ...props}: CardProps) {
+function Card({className, variant, interactive, href, ...props}: CardProps) {
   const classes = cn(cardVariants({variant, interactive}), interactive && variant === 'outline' && 'hover:bg-surface active:bg-surface-2', variant === 'glow' && (interactive ? 'hover:bg-accent active:bg-accent' : 'glow-still'), className);
   if (interactive && href) {
     return <a data-slot="card" href={href} className={cn(classes, 'no-underline')} {...(props as React.ComponentProps<'a'>)}/>;
   }
   if (interactive) {
-    return (
-      <div
-        data-slot="card"
-        role="button"
-        tabIndex={0}
-        className={classes}
-        onKeyDown={e => {
-          onKeyDown?.(e);
-          if (e.defaultPrevented || e.target !== e.currentTarget) return;
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); }
-        }}
-        {...props}
-      />
-    );
+    // A button is inline by default and centres its text; the card fills its column and reads from the start.
+    return <button data-slot="card" type="button" className={cn(classes, 'w-full text-start')} {...(props as React.ComponentProps<'button'>)}/>;
   }
-  return <div data-slot="card" className={classes} onKeyDown={onKeyDown} {...props}/>;
+  return <div data-slot="card" className={classes} {...props}/>;
 }
 
 function CardHeader({className, ...props}: React.ComponentProps<'div'>) {

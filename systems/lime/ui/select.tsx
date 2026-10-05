@@ -58,7 +58,7 @@ function SelectContent({className, children, ...props}: SelectPrimitive.Popup.Pr
   const container = useLimePortal();
   return (
     <SelectPrimitive.Portal container={container}>
-      <SelectPrimitive.Positioner sideOffset={6} alignItemWithTrigger={false} collisionPadding={8} className="isolate z-50 outline-none">
+      <SelectPrimitive.Positioner sideOffset={6} alignItemWithTrigger={false} collisionPadding={8} className="isolate z-(--z-popover) outline-none">
         <SelectPrimitive.Popup data-slot="select-content" className={typeof className === 'function' ? className : cn(popupClass, className)} {...props}>
           <SelectPrimitive.List className="max-h-(--popup-max,20rem) overflow-y-auto overscroll-contain">{children}</SelectPrimitive.List>
         </SelectPrimitive.Popup>

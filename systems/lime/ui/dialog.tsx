@@ -14,13 +14,13 @@ import {Button} from './button';
 // The title is required: it names the dialog for screen readers. Buttons name the action ("Save name").
 
 const backdropClass = cn(
-  'fixed inset-0 z-50 bg-scrim transition-opacity duration-(--dur-base) ease-(--ease-out)',
+  'fixed inset-0 z-(--z-dialog) bg-scrim transition-opacity duration-(--dur-base) ease-(--ease-out)',
   'data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-(--dur-fast)',
 );
 
 const dialogVariants = cva(
   [
-    'fixed start-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-sheet bg-raised p-6 text-fg shadow-overlay outline-none',
+    'fixed start-1/2 top-1/2 z-(--z-dialog) flex max-h-[calc(100dvh-(--spacing(8)))] w-[calc(100vw-(--spacing(8)))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-sheet bg-raised p-6 text-fg shadow-overlay outline-none',
     'rtl:translate-x-1/2',
     'transition-[opacity,scale] duration-(--dur-slow) ease-(--ease-out)',
     'data-starting-style:scale-(--scale-enter) data-starting-style:opacity-0 data-ending-style:scale-(--scale-enter) data-ending-style:opacity-0 data-ending-style:duration-(--dur-fast) data-ending-style:ease-(--ease-in)',
@@ -76,7 +76,7 @@ function DialogFooter({className, ...props}: React.ComponentProps<'div'>) {
 }
 
 function DialogTitle({className, ...props}: DialogPrimitive.Title.Props) {
-  return <DialogPrimitive.Title data-slot="dialog-title" className={typeof className === 'function' ? className : cn('text-xl leading-tight font-semibold tracking-tight', className)} {...props}/>;
+  return <DialogPrimitive.Title data-slot="dialog-title" className={typeof className === 'function' ? className : cn('title-overlay', className)} {...props}/>;
 }
 
 function DialogDescription({className, ...props}: DialogPrimitive.Description.Props) {

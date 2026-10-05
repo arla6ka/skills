@@ -25,6 +25,8 @@ Most asks are one of three jobs, and the route follows the job.
 | A big app with no system. Build one from it, check-first | Build. Full when the ask names the migration |
 | A big app with a weak system. Harden it, then converge the app onto it | Harden, then Full from step 5 on clearance |
 | No app yet. Start from brand material or defaults | Seed |
+| An app on an installed system. Port its screens onto it, or check one against it | Installed system, or Review |
+| The repo is the design system. Harden and document it | System repo |
 
 The foundation changes what each step reads and writes, and each base reference covers its own case, including how the system ships. On a package library, the system wraps the library and its theme object is the token source. On the team's own package, the package is the target and the app pins a version of it. On raw code, the build picks a canonical implementation per family. For Seed with no foundation, the default is shadcn. Nothing publishes to a package registry unless a person asks, and that is a stop.
 
@@ -102,6 +104,28 @@ For an ask that names component families and a PR or upstream. It always runs wi
 2. Edits. One worker per family on disjoint files, briefed from `references/delegation.md` with the edit list as its plan, one commit per family. Make the smallest change that fixes the family: a missing prop on the component, never a new abstraction, dependency or token. A file with 0 importers stays out and goes in the PR body's follow-ups. Done when each family has its commit and every changed surface has before and after captures.
 3. Check. On a clean clone of the run branch, the repo's own lint, typecheck and build, after its typecheck prerequisites, and the repo's formatter in check mode on the changed files. Done when each command's exit code is in the state file.
 4. Close per `build-design-system/references/coordinator-path.md` (Close, Minimal footprint).
+
+## Installed system
+
+For an app with a design system installed from a registry, whose `SKILL.md` is the source of truth (`references/triage.md`, The installed system). The boss never writes into `installed_system_dirs`.
+
+1. Criteria. Read `installed_system_skill` whole and save its path, with the registry version or commit when the skill or theme names one, in the state file. Every later brief names that path as the criteria. Done when the state file holds the path and the count of its global rules.
+2. `migrate-design-system`, audit mode. Receives the installed system as the target, its `SKILL.md` as the criteria, the triage folder and `installed_system_dirs`. Legacy is any screen piece the system's index covers that the app builds another way. Done when `plan.md` exists.
+3. Gaps. Sort each `missing` row in `plan.md`: a component the index lists becomes a decision row to add it with the system's own add command, and anything else becomes a gap row where the system keeps its coverage gaps, plus a gate whose default leaves the screen's code as it is. Done when every `missing` row names its index entry or its gap row. With none, `skipped (no gaps)`.
+4. Clearance, as Full step 5. "Port", "migrate" and "move onto <name>" name the migration.
+5. `migrate-design-system`, as Full step 6, with the same criteria. Added components land first, one commit each, before any surface uses them.
+6. `ui-review`, as Full step 7, with the `SKILL.md` path as its criteria.
+
+With no routes to port, `plan.md` has no surfaces and the route ends at step 3. Next is the first screen built from the system's `SKILL.md`, then Review on it.
+
+## System repo
+
+For a repo whose product is the design system itself, with no app to migrate or audit.
+
+1. `build-design-system`, harden mode. Receives the registry or token source and the component folders as the layer, and the triage folder. The pilot is the system's own example or docs page for the family the ask names, else the family with the most components. When every family already has a spec and the ask is docs, it runs as Document step 1 instead. Done as Harden step 1.
+2. Check the system, as Build step 4.
+
+No migrate audit runs, since nothing consumes the system inside the repo. Next names the apps that install it, if the person named any, and offers the Installed system route there.
 
 ## Values
 

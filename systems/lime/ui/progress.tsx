@@ -38,7 +38,7 @@ function Progress({value, max = 100, min = 0, label, valueText, shape = 'bar', s
     const length = 2 * Math.PI * r;
     return (
       <MeterPrimitive.Root data-slot="progress" data-shape="ring" {...root} className={cn('relative inline-grid shrink-0 place-items-center', className)} style={{width: box, height: box}}>
-        <svg aria-hidden="true" width={box} height={box} viewBox={`0 0 ${box} ${box}`} className="absolute inset-0 -rotate-90 rtl:scale-y-[-1]">
+        <svg aria-hidden="true" width={box} height={box} viewBox={`0 0 ${box} ${box}`} className="absolute inset-0 -rotate-90 rtl:-scale-y-100">
           <circle cx={box / 2} cy={box / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-surface-3"/>
           {share > 0 && <>
             <circle data-slot="progress-indicator" cx={box / 2} cy={box / 2} r={r} fill="none" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={length} strokeDashoffset={length * (1 - share)} className="stroke-accent transition-[stroke-dashoffset] duration-(--dur-base) ease-(--ease-out)"/>

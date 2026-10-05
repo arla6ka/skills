@@ -77,7 +77,7 @@ Mark each shown or not shown. A case not shown is a question for the designer, n
 ## What not to report
 
 - Preferences no criterion above supports.
-- Design-system compliance, such as token use, component choice or a spec's own completeness. `token-mapping`, `check-system.mjs` and `check-spec.mjs` cover those. Whether the screen shows a spec's states is an edge case (`SKILL.md` step 8).
+- Design-system compliance, such as token use, component choice or a spec's own completeness. `token-mapping`, `check-system.mjs`, `check-spec.mjs` and the project's lint cover those. An installed system's `SKILL.md` rule is the exception, since it is agreed criteria (`sources.md`, The installed system). Whether the screen shows a spec's states is an edge case (`SKILL.md` step 10).
 - Spacing that follows the design system. Optical misalignment and oversized icons are findings under criterion 10, citing `trap/icon-optical-align` or `trap/icon-optical-size`, since a person sees them first. A mark beside text is measured against the alignment reference in `docs/system/decisions.md`. With no such row, give its distance to the cap center, the x-height center and the midpoint, and put the choice under For a person to decide.
 - Rewritten copy. Flag the unclear text and say what is unclear.
 - The product decision behind a fix. Keep the finding and hand the decision to a person. Keeping the user's input is not a product decision (criterion 8).

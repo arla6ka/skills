@@ -15,7 +15,7 @@ function TabsList({className, children, ...props}: TabsPrimitive.List.Props) {
   return (
     <TabsPrimitive.List data-slot="tabs-list" className={typeof className === 'function' ? className : cn('relative flex w-full items-center gap-1 border-b border-line', className)} {...props}>
       {children}
-      <TabsPrimitive.Indicator data-slot="tabs-indicator" className="absolute left-(--active-tab-left) bottom-[-1px] h-0.5 w-(--active-tab-width) rounded-full bg-ink transition-[left,width] duration-(--dur-base) ease-(--ease-out) motion-reduce:transition-none"/>
+      <TabsPrimitive.Indicator data-slot="tabs-indicator" className="absolute left-(--active-tab-left) -bottom-px h-0.5 w-(--active-tab-width) rounded-full bg-ink transition-[left,width] duration-(--dur-base) ease-(--ease-out) motion-reduce:transition-none"/>
     </TabsPrimitive.List>
   );
 }

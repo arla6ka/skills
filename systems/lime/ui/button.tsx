@@ -23,7 +23,7 @@ const buttonVariants = cva(
   [
     'group/button relative inline-flex max-w-full shrink-0 items-center justify-center gap-2 rounded-control font-medium whitespace-nowrap select-none',
     'transition-[background-color,color,border-color,scale] duration-(--dur-instant) ease-out [-webkit-tap-highlight-color:transparent]',
-    'active:not-data-disabled:scale-[0.98] motion-reduce:active:scale-100',
+    'active:not-data-disabled:scale-(--scale-press)',
     'data-disabled:cursor-not-allowed aria-busy:cursor-progress',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
   ],

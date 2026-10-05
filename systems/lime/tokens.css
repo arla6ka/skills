@@ -135,8 +135,8 @@
   --text-xs: 12px; /* captions, counters | badge, hint */
   --text-sm: 14px; /* controls and body | button, input, menu item */
   --text-base: 16px; /* prose, large controls | message, large button */
-  --text-lg: 18px; /* a small heading | card title, dialog title */
-  --text-xl: 22px; /* a section heading | page section */
+  --text-lg: 18px; /* a small heading | card title, empty title */
+  --text-xl: 22px; /* a section or overlay heading | page section, dialog, alert-dialog and sheet titles */
   --text-2xl: 28px; /* a page heading | page title */
   --text-3xl: 36px; /* a display figure | account balance */
   --leading-tight: 1.2; /* headings | text-lg and up */
@@ -169,6 +169,12 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* the house curve | all transitions */
   --ease-in: cubic-bezier(0.4, 0, 1, 1); /* an element leaving | closing popups */
   --scale-enter: 0.97; /* a popup's starting scale | popover, menu, dialog */
+  --scale-press: 0.98; /* a control's scale while pressed | button, balance, keypad key */
+
+  /* == Layers: what sits above what == */
+  --z-dialog: 40; /* a dialog or sheet and its scrim | dialog, alert-dialog, sheet */
+  --z-popover: 50; /* a popup anchored to a control, above the dialog it opens from | popover, menu, select, combobox, tooltip */
+  --z-toast: 60; /* a toast, above everything else | toast */
 
   /* == Layout == */
   --overlay-sm: 384px; /* a small dialog | alert-dialog */
@@ -280,5 +286,5 @@
 
 /* Reduced motion zeroes every duration except the spinner, which is the only signal that work is running. */
 @media (prefers-reduced-motion: reduce) {
-  [data-system="lime"], .lime { --dur-instant: 0ms; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --scale-enter: 1; }
+  [data-system="lime"], .lime { --dur-instant: 0ms; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --scale-enter: 1; --scale-press: 1; }
 }

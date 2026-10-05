@@ -63,11 +63,11 @@ const popupBySide: Record<ResolvedSide, string> = {
   ),
   right: cn(
     'h-full w-full max-w-sheet rounded-sheet',
-    'translate-x-[var(--drawer-swipe-movement-x,0px)] data-starting-style:translate-x-[calc(100%+1rem)] data-ending-style:translate-x-[calc(100%+1rem)]',
+    'translate-x-[var(--drawer-swipe-movement-x,0px)] data-starting-style:translate-x-[calc(100%+(--spacing(4)))] data-ending-style:translate-x-[calc(100%+(--spacing(4)))]',
   ),
   left: cn(
     'h-full w-full max-w-sheet rounded-sheet',
-    'translate-x-[var(--drawer-swipe-movement-x,0px)] data-starting-style:-translate-x-[calc(100%+1rem)] data-ending-style:-translate-x-[calc(100%+1rem)]',
+    'translate-x-[var(--drawer-swipe-movement-x,0px)] data-starting-style:-translate-x-[calc(100%+(--spacing(4)))] data-ending-style:-translate-x-[calc(100%+(--spacing(4)))]',
   ),
 };
 
@@ -87,11 +87,11 @@ function SheetContent({className, children, ...props}: SheetContentProps) {
       <DrawerPrimitive.Backdrop
         data-slot="sheet-backdrop"
         className={cn(
-          'fixed inset-0 z-50 bg-scrim opacity-[calc(1-var(--drawer-swipe-progress,0))] transition-opacity duration-(--dur-slow) ease-(--ease-out)',
+          'fixed inset-0 z-(--z-dialog) bg-scrim opacity-[calc(1-var(--drawer-swipe-progress,0))] transition-opacity duration-(--dur-slow) ease-(--ease-out)',
           'data-swiping:transition-none data-starting-style:opacity-0 data-ending-style:opacity-0',
         )}
       />
-      <DrawerPrimitive.Viewport data-slot="sheet-viewport" className={cn('fixed inset-0 z-50 flex', viewportBySide[side])}>
+      <DrawerPrimitive.Viewport data-slot="sheet-viewport" className={cn('fixed inset-0 z-(--z-dialog) flex', viewportBySide[side])}>
         <DrawerPrimitive.Popup
           data-slot="sheet-content"
           data-side={side}
@@ -128,7 +128,7 @@ function SheetHeader({className, showClose = true, children, ...props}: SheetHea
 }
 
 function SheetTitle({className, ...props}: DrawerPrimitive.Title.Props) {
-  return <DrawerPrimitive.Title data-slot="sheet-title" className={typeof className === 'function' ? className : cn('text-lg leading-tight font-semibold', className)} {...props}/>;
+  return <DrawerPrimitive.Title data-slot="sheet-title" className={typeof className === 'function' ? className : cn('title-overlay', className)} {...props}/>;
 }
 
 function SheetDescription({className, ...props}: DrawerPrimitive.Description.Props) {
@@ -143,7 +143,7 @@ function SheetBody({className, ...props}: DrawerPrimitive.Content.Props) {
 function SheetFooter({className, ...props}: React.ComponentProps<'div'>) {
   const side = useContext(SheetContext);
   return <div data-slot="sheet-footer" className={cn(
-    'flex shrink-0 gap-2 px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+    'flex shrink-0 gap-2 px-5 pt-3 pb-[max(--spacing(5),env(safe-area-inset-bottom))]',
     side === 'bottom' ? 'flex-col-reverse *:w-full' : 'mt-auto justify-end',
     className,
   )} {...props}/>;

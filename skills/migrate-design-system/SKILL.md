@@ -51,7 +51,8 @@ The first commit that changes a surface fixes the complaint quoted in `frame.md`
 
 | Input | Required | If missing |
 |---|---|---|
-| The target system: token source, components, docs, and a version or commit | Yes | Find it per `references/inventory.md` (Finding the target system) and pin the commit in `frame.md` |
+| The target system: token source, components, docs, and a version or commit | Yes | Find it per `references/inventory.md` (Finding the target system), an installed system's `SKILL.md` first, and pin the commit in `frame.md` |
+| The criteria | No | The installed system's `SKILL.md` rules, else the system's specs and docs. Every verifier and `ui-review` gets the same file |
 | The app repo, able to build and run | Yes | Stop if it cannot build, except in audit mode. If it cannot run, offer audit mode only, since nothing can be verified. |
 | Mode | No | Audit, unless the ask names the migration |
 | Scope | No | Everything the inventory finds, listed in `frame.md` for the person to trim |

@@ -16,6 +16,14 @@ Look before asking. With repo access and a browser:
 
 Ask for screenshots or a URL only when none of this reaches a rendered screen. Under a coordinator, record the gap instead of asking.
 
+## The installed system
+
+An app may run on a design system installed from a registry: a `SKILL.md` in `.claude/skills/<name>/` or `.agents/skills/<name>/` that calls itself a design system's rules, beside `components/<name>/`. A coordinator passes its path. Read it whole before capturing. Its global rules, priority order and reject list are agreed criteria, so a finding cites the rule ID, such as `<name>-tokens-only`, beside the matching criterion number. Its priority order settles a conflict between two of its rules. Accessibility criteria still rank first, and a system rule that conflicts with one goes to For a person to decide. A screen that builds by hand what the system's index lists is a finding against the system's components-first rule. A pattern the index lacks is not the screen's fault: note it as a gap for the system's owner, in the system's coverage-gaps list when the skill names one. Fetch the page of each component on the screen before judging its use. With no installed system, say so in the Review record.
+
+## The project's lint
+
+Run the project's design lint first: an installed design system's lint config (`<name>.eslint.config.mjs` at the root, run as its skill says), or the lint the project already has (`npm run lint`, or the linter its config names), on the scoped files. Record the command and exit code in the Review record. A design lint covers raw colors, arbitrary values and restyled components, so read its output before capturing and look for those on screen. A lint finding points the probes at a file. It becomes a ranked finding only with a render that shows it, and the rest stay in the Review record with the lint's rule names. With no lint, write `lint: none`.
+
 ## Inferring the purpose
 
 Read the page title, the main heading, the primary action and the route. Write one sentence, such as "Assumed: lets an admin invite teammates by email." Stop and ask if those disagree or say nothing, if two versions arrived with nothing marking the current one, or if the criteria contradict AGENTS.md or CLAUDE.md with no rule on which wins.
@@ -29,7 +37,7 @@ Read the page title, the main heading, the primary action and the route. Write o
 - **A page that only partly renders** (a blank region, a failed asset, an error overlay) gets one more capture after the network goes quiet, since a slow load looks the same as a broken one. If it is still partial, review what rendered, name what did not, and mark the states it hides as not shown.
 - **A written description alone** is not enough. Ask for images or a link, because many criteria concern visual weight and position, which prose does not carry.
 
-An automated accessibility scan against WCAG A and AA runs at each viewport whenever a browser tool runs (`browser.md`, Evidence for a review). Sort its results like any accessibility observation (`SKILL.md` step 6). With pasted screenshots only, the record says the scan did not run.
+An automated accessibility scan against WCAG A and AA runs at each viewport whenever a browser tool runs (`browser.md`, Evidence for a review). Sort its results like any accessibility observation (`SKILL.md` step 8). With pasted screenshots only, the record says the scan did not run.
 
 Captures follow `browser.md` (Before the first check, and the three rules under Tool how-to), with one session per run named after the flow (`review-invite`). Cite a ref with its capture, `@e34 (home-1280.png)`, or the selector on the Playwright path.
 

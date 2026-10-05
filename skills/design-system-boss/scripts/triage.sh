@@ -110,6 +110,36 @@ EOF
   expect families "Button family" "$(awk -F'\t' '$1=="Button"{print $2}' "$d.out/families.tsv")" 1
   expect families families_with_2plus "$(sig "$d.out" families_with_2plus)" 1
 
+  # 6. An installed system is the source of truth: its folders leave the component and raw counts, and its
+  #    stylesheet joins the token files.
+  d=$T/installed
+  w "$d/package.json" <<< '{"dependencies":{"next":"15.0.0"}}'
+  printf -- '---\nname: acme\ndescription: Acme design system rules for this project UI.\n---\n\n# Acme\n' | w "$d/.claude/skills/acme/SKILL.md"
+  w "$d/components/acme/tokens.css" <<< '.acme { --fg: #111; }'
+  for c in Button Input Card Badge Tooltip; do
+    w "$d/components/acme/ui/$c.tsx" <<< "export function $c() { return <div style={{ color: \"#ff0000\" }} /> }"
+  done
+  w "$d/lib/acme/utils.ts" <<< 'export const tone = "#00ff00"'
+  for r in app/page.tsx app/team/page.tsx; do w "$d/$r" <<< 'import { Button } from "@/components/acme/ui/Button"; export default function P() { return <Button /> }'; done
+  run "$d"
+  expect installed installed_system "$(sig "$d.out" installed_system)" acme
+  expect installed installed_system_skill "$(sig "$d.out" installed_system_skill)" .claude/skills/acme/SKILL.md
+  expect installed "acme in components.tsv" "$(grep -c 'components/acme' "$d.out/components.tsv")" 0
+  expect installed raw_color_lines "$(sig "$d.out" raw_color_lines)" 0
+  expect installed "tokens.css in token-files.txt" "$(grep -c 'components/acme/tokens.css' "$d.out/token-files.txt")" 1
+  expect installed system_repo "$(sig "$d.out" system_repo)" no
+
+  # 7. A design system's own repo: no app routes, a registry, and components as the main content.
+  d=$T/sysrepo
+  w "$d/package.json" <<< '{"name":"acme-ui"}'
+  w "$d/registry.json" <<< '{"items":[{"name":"button","files":[{"path":"registry/ui/Button.tsx"}]}]}'
+  w "$d/registry/tokens.css" <<< '@theme { --color-fg: #111; }'
+  for c in Button Input Card Badge Tooltip; do w "$d/registry/ui/$c.tsx" <<< "export function $c() { return <div /> }"; done
+  run "$d"
+  expect sysrepo system_repo "$(sig "$d.out" system_repo)" yes
+  expect sysrepo installed_system "$(sig "$d.out" installed_system)" none
+  expect vite system_repo "$(sig "$T/vite.out" system_repo)" no
+
   rm -rf "$T"
   if [ "$fails" -eq 0 ]; then echo "all as expected"; else echo "$fails failed"; exit 1; fi
 }
@@ -136,6 +166,26 @@ EXCL=(-g '!**/.design-system/**' -g '!**/.migration/**' -g '!**/.agents/**' -g '
   -g '!**/*.min.*' -g '!**/*.svg' -g '!**/*.lock' -g '!package-lock.json')
 SKILLDIRS=$(rg --files --hidden -g '**/SKILL.md' -g '!**/node_modules/**' -g '!.git/**' . 2>/dev/null | sed 's#^\./##' | xargs -n1 dirname 2>/dev/null | sort -u)
 while read -r d; do [ -n "$d" ] && [ "$d" != . ] && EXCL+=(-g "!$d/**"); done <<< "$SKILLDIRS"
+# An installed design system: a skill in .claude/skills/<name>/ or .agents/skills/<name>/ whose description says it
+# holds a design system's rules, beside a components/<name>/ folder that holds tokens.css, styles.css or theme.css,
+# or that the skill's own add command names. It is the source of truth, not the app's code, so its folders
+# (components/<name>, lib/<name>) leave every count, and its stylesheets join the token files.
+INST=(); INST_SKILL=(); INST_DIRS=()
+for s in .claude/skills/*/SKILL.md .agents/skills/*/SKILL.md; do
+  [ -f "$s" ] || continue
+  n=$(basename "$(dirname "$s")")
+  case " ${INST[*]-} " in *" $n "*) continue;; esac
+  awk '/^---/{c++; next} c==1 && /^description:/' "$s" | grep -qiE 'design[ -]system' || continue
+  hit=""
+  for c in "components/$n" "src/components/$n"; do
+    [ -d "$c" ] || continue
+    for t in tokens styles theme; do [ -f "$c/$t.css" ] && hit=$c; done
+    grep -qE "add [^ ]*/$n/" "$s" && hit=$c
+  done
+  [ -n "$hit" ] || continue
+  INST+=("$n"); INST_SKILL+=("$s")
+  for d in "components/$n" "src/components/$n" "lib/$n" "src/lib/$n"; do [ -d "$d" ] && INST_DIRS+=("$d") && EXCL+=(-g "!$d/**"); done
+done
 # Specs live in docs/system, so component_specs reads with SPECX, which keeps it. Every other count uses EXCL.
 SPECX=("${EXCL[@]}"); EXCL+=(-g '!**/docs/system/**')
 SRC=(-g '*.{css,scss,sass,less,ts,tsx,js,jsx,vue,svelte,astro,html,mdx}')
@@ -212,6 +262,9 @@ foundation=raw
 if [ "$shadcn" = yes ]; then foundation=shadcn; [ "${regs:-none}" != none ] && foundation=shadcn+registry
 elif [ "$lib" != none ]; then foundation="library:$lib"
 elif [ -n "$own" ]; then foundation="package:$own"; fi
+put installed_system "${INST[*]:-none}"
+put installed_system_skill "${INST_SKILL[*]:-none}"
+put installed_system_dirs "${INST_DIRS[*]:-none}"
 # An empty app (1 or fewer routes, 2 or fewer product components) has no foundation yet. Printed
 # once product_component_defs is known, as "none (default: shadcn)", the Seed route's default.
 
@@ -361,6 +414,7 @@ put same_name_defs "$(cut -f2 "$OUT/components.tsv" | sort | uniq -d | wc -l | t
 # Token sources
 rg --files -g '*.tokens.json' -g '**/tokens/**/*.json' -g 'tokens.json' -g '**/design-tokens.*' -g 'tailwind.config.*' "${EXCL[@]}" 2>/dev/null > "$OUT/token-files.txt"
 rg -l -g '*.{css,scss}' "${EXCL[@]}" '@theme\b' 2>/dev/null >> "$OUT/token-files.txt"
+for d in ${INST_DIRS[@]+"${INST_DIRS[@]}"}; do rg --files -g '*.css' "$d" 2>/dev/null; done >> "$OUT/token-files.txt"
 put token_files "$(sort -u "$OUT/token-files.txt" | wc -l | tr -d ' ')"
 # Adoption counts product files only. The system's own files (the component layer and the token
 # source), examples, docs, fixtures, tests and stories are left out. Raw values inside the layer are
@@ -520,13 +574,30 @@ put storybook "$( [ -d .storybook ] && echo yes || echo no )"
 put stories "$(rg --files -g '*.stories.*' "${EXCL[@]}" 2>/dev/null | wc -l | tr -d ' ')"
 put llms_txt "$(rg --files -g '**/llms.txt' -g '**/llms.txt/**' "${EXCL[@]}" 2>/dev/null | head -1 | grep -q . && echo yes || echo no)"
 # registry.json kind: shadcn (items[]), designhow ({ "components": [] }) or other
-reg=no
+reg=no; reg_path=""
 for r in $(rg --files -g '**/registry.json' "${EXCL[@]}" 2>/dev/null | head -5); do
-  if rg -q '"items"\s*:' "$r"; then reg=shadcn; break
-  elif rg -q '"components"\s*:' "$r"; then reg=designhow
+  if rg -q '"items"\s*:' "$r"; then reg=shadcn; reg_path=$r; break
+  elif rg -q '"components"\s*:' "$r"; then reg=designhow; reg_path=$r
   elif [ "$reg" = no ]; then reg=other; fi
 done
 put registry_json "$reg"
+# The system is the product: a repo whose main content is a design system, not an app. With no installed system
+# and 5 or more components of its own, either it has 1 or fewer routes and a registry or token source, or its
+# registry lists 5 or more component files and at least half of them (a system that also serves a docs site).
+sysrepo=no
+if [ ${#INST[@]} -eq 0 ] && [ "$pdefs" -ge 5 ]; then
+  listed=0
+  [ -n "$reg_path" ] && command -v node >/dev/null && listed=$(node -e '
+    const fs=require("fs"),path=require("path");const [reg,comps]=process.argv.slice(1);
+    let j;try{j=JSON.parse(fs.readFileSync(reg,"utf8"))}catch{console.log(0);process.exit()}
+    const listed=new Set();for(const it of [...(j.items||[]),...(j.components||[])])for(const f of [it.source,...(it.files||[]).map(f=>typeof f==="string"?f:f.path)])if(f)listed.add(path.normalize(path.join(path.dirname(reg),f)));
+    const files=new Set(fs.readFileSync(comps,"utf8").split("\n").filter(Boolean).map(l=>path.normalize(l.split("\t")[0])));
+    console.log([...files].filter(f=>listed.has(f)).length)' "$reg_path" "$OUT/components.tsv" 2>/dev/null)
+  cfiles=$(cut -f1 "$OUT/components.tsv" | sort -u | wc -l | tr -d ' ')
+  ntok=$(sort -u "$OUT/token-files.txt" | wc -l | tr -d ' ')
+  if { [ "$routes" -le 1 ] && { [ "$reg" != no ] || [ "$ntok" -ge 1 ]; }; } || { [ "${listed:-0}" -ge 5 ] && [ $(( ${listed:-0} * 2 )) -ge "$cfiles" ]; }; then sysrepo=yes; fi
+fi
+put system_repo "$sysrepo"
 put system_docs_routes "$(rg --files -g '**/app/system/**' -g '**/app/design-system/**' -g '**/pages/system/**' "${EXCL[@]}" 2>/dev/null | wc -l | tr -d ' ')"
 # Specs only: twins, fixtures and examples repeat a spec and would count it twice.
 put component_specs "$(rg -l -g '*.md' "${SPECX[@]}" -g '!**/fixtures/**' -g '!**/__fixtures__/**' -g '!**/*.examples/**' -g '!**/public/**' -g '!**/static/**' -g '!**/checks/**' -g '!**/spec-template.md' -g '!**/*template*.md' -e '^### State precedence' 2>/dev/null | wc -l | tr -d ' ')"

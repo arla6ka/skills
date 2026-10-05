@@ -20,7 +20,9 @@ The inventory is a script, not a search the model runs by hand. It finds every p
 
 ## Finding the target system
 
-Look for `.design-system/run.md`, `registry.json`, a token source, a UI package or folder, a `/system` route, or the foundation's config file. Read the foundation's base reference in `build-design-system/references/`. Stop and point to `build-design-system` only when nothing is found, or two candidates disagree and no project rule picks one.
+An installed system comes first: the `installed_system_skill` a coordinator passes, else a `SKILL.md` in `.claude/skills/<name>/` or `.agents/skills/<name>/` that calls itself a design system's rules, beside `components/<name>/` (`design-system-boss/references/triage.md`, The installed system). Read it whole before the inventory. Its global rules and priority order are the criteria in `frame.md`, the done predicate and every verifier's brief. Its component index decides what counts as covered, its add command installs a listed component the app lacks, and its folders are the target, never a surface. A pattern the index lacks is a gap in the system's own coverage-gaps list and a gate that leaves the screen as it is.
+
+With no installed system, look for `.design-system/run.md`, `registry.json`, a token source, a UI package or folder, a `/system` route, or the foundation's config file. Read the foundation's base reference in `build-design-system/references/`. Stop and point to `build-design-system` only when nothing is found, or two candidates disagree and no project rule picks one.
 
 ## What counts as legacy
 

@@ -64,6 +64,11 @@ State, **weak** and intent come from `references/triage.md`. `references/routes.
 
 | State | Intent | Route |
 |---|---|---|
+| installed | review | Review, with the installed system's `SKILL.md` as the criteria. Wins over every row below |
+| installed | audit | Audit, with the installed system as the target |
+| installed | any other | Installed system |
+| system repo | review, audit, component | That intent's row below |
+| system repo | any other | System repo |
 | empty | any | Seed |
 | none, or drifting and not weak | build | Build |
 | drifting, weak | build | Harden, stated in the Frame |
@@ -78,7 +83,7 @@ State, **weak** and intent come from `references/triage.md`. `references/routes.
 | any | review | Review |
 | any | audit | Audit |
 
-When the ask mentions a PR or upstream, or the repo looks like someone else's, the route runs as `<route>, minimal footprint` (Footprint in run-record Terms). When the ask and the state disagree, the state wins and the Frame says so. "Migrate us" on state `none` is Build.
+An installed system is the source of truth, so no route seeds, builds or hardens over it. It grows only by a gap recorded for its owner (`references/triage.md`, The installed system). When the ask mentions a PR or upstream, or the repo looks like someone else's, the route runs as `<route>, minimal footprint` (Footprint in run-record Terms). When the ask and the state disagree, the state wins and the Frame says so. "Migrate us" on state `none` is Build.
 
 ## Boundaries
 

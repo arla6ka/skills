@@ -20,6 +20,7 @@ Every case runs on every setup except these:
 | Fixed means measured again | A follow-up pass |
 | Interaction on a local build, Answers the hand, Motion curve | A live build |
 | Dialog and form probes, Lost or mismatched input | The flow has a dialog or form |
+| Installed system criteria | The app has a design system installed with its `SKILL.md` |
 
 ## Done means
 
@@ -32,6 +33,14 @@ The readiness list under Output in `SKILL.md`.
 **Expect:** a review record naming the images, 1280 px, today's date, the default criteria file, and the purpose marked given. Findings grouped by severity, each with a criterion, a screen plus region, evidence naming the capture, and a dedupe key. The label issue appears once with a count of 2 under one key. The report's last line starts `Coverage:` and names 1280 px as measured and the narrow width as not. Every edge case is marked, and the summary matches the findings.
 
 **Fails if:** a finding lacks a criterion, location or evidence type, the label issue appears twice, or the report claims anything about mobile widths.
+
+## Installed system criteria
+
+**Input:** an app with a design system installed from a registry, its skill in `.claude/skills/<name>/SKILL.md`, a lint script, and a screen that hand-builds a button the system ships, uses one raw color, and needs a pattern the system's index lacks. The prompt "is the transfer screen ready?"
+
+**Expect:** the Review record names the system's `SKILL.md` as the first criteria file and the lint command with its exit code. The hand-built button is a finding that cites the system's components-first rule ID beside a criterion number. The raw color stays in the Review record as a lint finding unless a capture shows its effect. The missing pattern is noted as a gap for the system's owner, not as the screen's finding.
+
+**Fails if:** the review uses only the default criteria, skips the lint without writing `lint: none`, or ranks the missing pattern against the screen.
 
 ## Vague request
 

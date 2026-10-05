@@ -8,7 +8,8 @@ import {cn} from '../lib/utils';
 // the rows on a warm-grey card with inset hairlines; plain leaves them on the page.
 //
 // One action per row: a row that is a link or button holds no other control. A settings row with a
-// Switch is a plain row, and the Switch is the control.
+// Switch is a plain row, and the Switch is the control. Secondary actions (rename, hide, remove) go in `menu`,
+// a ListItemMenu: it sits beside the row, not inside it, so the row and its menu are two separate controls.
 
 const listVariants = cva('flex flex-col', {
   variants: {
@@ -39,6 +40,8 @@ type ListItemProps = Omit<React.ComponentProps<'li'>, 'title' | 'onClick'> & {
   href?: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
+  /** A ListItemMenu: the row's other actions behind a more button at the end. */
+  menu?: React.ReactNode;
 };
 
 const rowClass = cn(
@@ -50,7 +53,7 @@ const rowClass = cn(
 
 const pressable = 'cursor-pointer transition-colors duration-(--dur-instant) hover:bg-surface-2 active:bg-surface-3 group-data-[variant=grouped]/list:hover:bg-surface-2';
 
-function ListItem({title, description, leading, trailing, chevron, href, onClick, disabled, className, ...props}: ListItemProps) {
+function ListItem({title, description, leading, trailing, chevron, href, onClick, disabled, menu, className, ...props}: ListItemProps) {
   const showChevron = chevron ?? Boolean(href);
   const body = <>
     {leading && <span data-slot="list-leading" className="flex shrink-0">{leading}</span>}
@@ -61,13 +64,17 @@ function ListItem({title, description, leading, trailing, chevron, href, onClick
     {trailing && <span data-slot="list-trailing" className="flex shrink-0 items-center text-base text-fg tabular-nums">{trailing}</span>}
     {showChevron && <Icon icon={ChevronRight} size={16} className="-me-1 text-fg-3 rtl:-scale-x-100"/>}
   </>;
+  // With a menu the row keeps its full width, so its hover fill runs under the more button, and leaves room at
+  // the end for the button, which sits over it as a sibling.
+  const shape = cn(rowClass, leading && 'after:start-17', menu ? 'pe-14' : undefined);
   return (
-    <li data-slot="list-item" className={cn('group/item', className)} {...props}>
+    <li data-slot="list-item" className={cn('group/item', menu && 'relative', className)} {...props}>
       {href && !disabled
-        ? <a data-slot="list-row" href={href} className={cn(rowClass, pressable, leading && 'after:start-17')}>{body}</a>
+        ? <a data-slot="list-row" href={href} className={cn(shape, pressable)}>{body}</a>
         : onClick
-          ? <button data-slot="list-row" type="button" onClick={onClick} disabled={disabled} className={cn(rowClass, pressable, leading && 'after:start-17', 'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent')}>{body}</button>
-          : <div data-slot="list-row" className={cn(rowClass, leading && 'after:start-17', disabled && 'opacity-50')}>{body}</div>}
+          ? <button data-slot="list-row" type="button" onClick={onClick} disabled={disabled} className={cn(shape, pressable, 'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent')}>{body}</button>
+          : <div data-slot="list-row" className={cn(shape, disabled && 'opacity-50')}>{body}</div>}
+      {menu && <span data-slot="list-menu" className="absolute end-3 top-1/2 flex -translate-y-1/2">{menu}</span>}
     </li>
   );
 }

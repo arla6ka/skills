@@ -6,14 +6,16 @@ description: Critiques a screen, flow, prototype or running build against agreed
 # UI review
 
 1. **Scope.** A scope the caller names, else the branch's changed screens, else 5 top routes (`references/sources.md`, Finding the design).
-2. **Capture** each screen at each viewport and run the accessibility scan there (`references/sources.md`, What counts as evidence).
-3. **Fix the purpose**, inferred and marked assumed when not given, or stop on the conditions in `references/sources.md` (Inferring the purpose).
-4. **Probe** every trap family the screen has, on a local build only (`references/sources.md`, Trap probes). Each probe gets a measured result or a reason it did not run.
-5. **Walk criteria 1 to 13** at each viewport (`references/review-criteria.md`).
-6. **Sort** repeats, chained findings, `system-caused` findings, accessibility, taste and departures per `references/review-criteria.md` (Sorting).
-7. **Rank** `blocking`, `should-fix`, `note`, and within each by surface tier, then places hit (`references/review-criteria.md`, Severity).
-8. **Walk the edge cases**, marking each shown or not shown, plus the States rows of each spec for a component on the screen (`references/sources.md`, Component specs).
-9. **Write the verdict and summary last** (Output).
+2. **Criteria.** An installed design system's `SKILL.md` first, then `references/review-criteria.md` (`references/sources.md`, The installed system).
+3. **Lint.** Run the project's own lint on the scoped files and record the command and exit code (`references/sources.md`, The project's lint).
+4. **Capture** each screen at each viewport and run the accessibility scan there (`references/sources.md`, What counts as evidence).
+5. **Fix the purpose**, inferred and marked assumed when not given, or stop on the conditions in `references/sources.md` (Inferring the purpose).
+6. **Probe** every trap family the screen has, on a local build only (`references/sources.md`, Trap probes). Each probe gets a measured result or a reason it did not run.
+7. **Walk the installed system's rules, then criteria 1 to 13,** at each viewport (`references/review-criteria.md`).
+8. **Sort** repeats, chained findings, `system-caused` findings, accessibility, taste and departures per `references/review-criteria.md` (Sorting).
+9. **Rank** `blocking`, `should-fix`, `note`, and within each by surface tier, then places hit (`references/review-criteria.md`, Severity).
+10. **Walk the edge cases**, marking each shown or not shown, plus the States rows of each spec for a component on the screen (`references/sources.md`, Component specs).
+11. **Write the verdict and summary last** (Output).
 
 Never ship:
 
@@ -37,7 +39,7 @@ Then six parts.
 
 1. **Review record.** Source, tool, viewports, date, criteria file, first pass or follow-up, the purpose marked given or assumed, every assumption, and every gap. Each n/a criterion gives its reason ("8. No destructive action on this screen").
 2. **Summary.** What the screen asks, what works, and what most needs attention.
-3. **Findings** by severity. Each gives what was seen, where (screen and region, or the element by role and name with its ref or selector and capture, as in `button 'Save changes' @e34 (settings-1280.png)`), the viewport, the surface's tier, the criterion by number and name, why it matters for this task, the evidence type and dedupe key (`references/sources.md`, What counts as evidence), and any matching `trap/` or `rule/` ID. A `system-caused` finding names the token, preset or component.
+3. **Findings** by severity. Each gives what was seen, where (screen and region, or the element by role and name with its ref or selector and capture, as in `button 'Save changes' @e34 (settings-1280.png)`), the viewport, the surface's tier, the criterion by number and name or the installed system's rule ID, why it matters for this task, the evidence type and dedupe key (`references/sources.md`, What counts as evidence), and any matching `trap/` or `rule/` ID. A `system-caused` finding names the token, preset or component.
 4. **Edge cases not shown.** One line each.
 5. **For a person to decide.** Semantics-changing accessibility fixes, product decisions a fix needs, and problems no criterion covers, each tied to a finding or location.
 6. **Left out.** Preferences dropped, each with the reason.

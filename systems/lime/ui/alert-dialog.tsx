@@ -37,7 +37,7 @@ function AlertDialogFooter({className, ...props}: React.ComponentProps<'div'>) {
 }
 
 function AlertDialogTitle({className, ...props}: AlertDialogPrimitive.Title.Props) {
-  return <AlertDialogPrimitive.Title data-slot="alert-dialog-title" className={typeof className === 'function' ? className : cn('text-xl leading-tight font-semibold tracking-tight', className)} {...props}/>;
+  return <AlertDialogPrimitive.Title data-slot="alert-dialog-title" className={typeof className === 'function' ? className : cn('title-overlay', className)} {...props}/>;
 }
 
 function AlertDialogDescription({className, ...props}: AlertDialogPrimitive.Description.Props) {

@@ -13,7 +13,9 @@
 @import "./base.css";
 @import "tailwindcss/utilities.css" source(none);
 
+/* Lime's own files, but not the lint: it names every class Lime has and many it bans, and none of it is markup. */
 @source "./";
+@source not "./lint";
 
 /* dark: matches inside the dark theme. Components never use it (tokens flip instead); it is here for
    one-off cases in your own markup. */
@@ -34,7 +36,7 @@
 @custom-variant motion-safe { @media (prefers-reduced-motion: no-preference) { &:not(:where([data-force-reduced-motion], [data-force-reduced-motion] *)) { @slot; } } }
 
 /* The same durations tokens.css zeroes under the media query, for a forced wrapper. */
-.lime [data-force-reduced-motion], [data-system="lime"] [data-force-reduced-motion] { --dur-instant: 0ms; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --scale-enter: 1; }
+.lime [data-force-reduced-motion], [data-system="lime"] [data-force-reduced-motion] { --dur-instant: 0ms; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --scale-enter: 1; --scale-press: 1; }
 
 /* Glow: the one gradient in Lime. A solid accent body lit from inside.
    For the primary action, the balance chip and one featured card; never a background, text or an icon.
@@ -308,3 +310,11 @@
 }
 
 @keyframes lime-spin { to { transform: rotate(1turn); } }
+
+/* Text roles: the size, weight, leading and tracking for each job, so a title or a caption is set the same way
+   in every component. Color stays separate; pick it by role (text-fg, text-fg-2, text-fg-3). */
+@utility title-page { @apply text-xl sm:text-2xl leading-tight font-semibold tracking-tight; }
+@utility title-overlay { @apply text-xl leading-tight font-semibold tracking-tight; }
+@utility label { @apply text-sm leading-snug font-medium; }
+@utility body { @apply text-sm leading-normal font-normal; }
+@utility caption { @apply text-xs font-normal; }

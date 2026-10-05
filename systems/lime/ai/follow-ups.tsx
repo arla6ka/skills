@@ -20,7 +20,7 @@ function FollowUps({suggestions, onSelect, className, ...props}: FollowUpsProps)
           type="button"
           data-slot="follow-up"
           onClick={() => onSelect(text)}
-          className="inline-flex min-h-8 max-w-full items-center rounded-panel border border-line-strong bg-page px-3 py-1 text-start text-sm text-fg outline-none transition-colors duration-(--dur-instant) hover:bg-surface focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-(--focus-offset) focus-visible:outline-ring"
+          className="inline-flex min-h-(--control-sm) max-w-full items-center rounded-panel border border-line-strong bg-page px-3 py-1 text-start text-sm text-fg outline-none transition-colors duration-(--dur-instant) hover:bg-surface focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-(--focus-offset) focus-visible:outline-ring"
         >
           {text}
         </button>

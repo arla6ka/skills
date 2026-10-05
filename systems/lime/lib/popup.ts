@@ -5,7 +5,7 @@ import {cn} from './utils';
 // in from 0.97 and out again; reduced motion zeroes the duration in tokens.css.
 
 export const popupClass = cn(
-  'relative isolate z-50 max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-panel bg-raised p-1 text-fg shadow-menu outline-none',
+  'relative isolate z-(--z-popover) max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-panel bg-raised p-1 text-fg shadow-menu outline-none',
   'transition-[opacity,scale] duration-(--dur-base) ease-(--ease-out)',
   'data-starting-style:scale-(--scale-enter) data-starting-style:opacity-0 data-ending-style:scale-(--scale-enter) data-ending-style:opacity-0 data-ending-style:duration-(--dur-fast) data-ending-style:ease-(--ease-in)',
 );

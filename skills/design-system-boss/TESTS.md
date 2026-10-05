@@ -11,6 +11,8 @@ The cases assume these practice repos, kept in git and shaped to your stack:
 - **Weak shadcn** is Fresh shadcn with a dozen routes, a legacy `Modal` and `PrimaryButton` in `components/custom`, palette classes and raw hex values in product code, and no specs.
 - **Library** uses a package component library with a theme object, about 10 routes and two `Button` wrappers.
 - **Upstream** is an open-source app the person does not own.
+- **Installed** is Weak shadcn with a design system added from a registry: its components in `components/<name>/`, its stylesheet beside them, and its skill in `.claude/skills/<name>/SKILL.md`, with a coverage-gaps list the skill names. Product screens still use their own buttons, raw colors and one pattern the system's index lacks.
+- **System repo** is a design system's own source: a shadcn `registry.json` listing a dozen components, a token stylesheet, specs for half the families, and no app routes.
 - **Small router app** has a client-side router config with 5 routes, 9 files in `src/pages`, a shared `src/components` folder, raw colors in the pages, and under 3,000 lines of UI code.
 
 ## Which cases apply
@@ -182,11 +184,27 @@ Watch for a skill picked from the prompt's wording without looking at the repo, 
 
 ## Triage bugs
 
-**Input:** `triage.sh --self-test`. Then by hand: a component file declared `export default async function`; a repo after a finished run, with specs in `docs/system`; Small router app; Weak shadcn after a run that turned `PrimaryButton` into a wrapper that renders `Button`.
+**Input:** `triage.sh --self-test`, which also covers an installed system and a system repo. Then by hand: a component file declared `export default async function`; a repo after a finished run, with specs in `docs/system`; Small router app; Weak shadcn after a run that turned `PrimaryButton` into a wrapper that renders `Button`.
 
 **Expect:** the self-test ends `all as expected`. The async component is in `components.tsv`. `component_specs` counts the run's specs, so the re-triage no longer reads the layer as weak. On Small router app, `routes` is 5 from the router config, `shared_ui_dirs` is `src/components` and never `src`, and `raw_color_lines` counts the pages' colors. After the merge, the Button family counts 1 and `wrappers.tsv` names `PrimaryButton`.
 
 **Fails if:** the self-test fails, a `pages/` folder outside a file-based router counts as routes, the source root is the layer, or `families_with_2plus` rises after a run that merged a family.
+
+## Installed system
+
+**Input:** Installed, and "port the settings and billing screens onto <name>". Then "check the invite flow before I ship". Then "we need a design system, our buttons are all different".
+
+**Expect:** triage reads `installed_system <name>` with its skill path, and the system's folders add nothing to `component_defs`, `families_with_2plus` or `raw_color_lines`. The state is `installed`. The port ask routes Installed system: migrate audits with the system as the target and its `SKILL.md` rules as the criteria, the pattern the index lacks becomes a gap row in the system's coverage-gaps list with a gate that leaves the screen's code as it is, and the ask is clearance for the two named screens. The ship check routes Review, and `ui-review` cites the system's rule IDs. The build ask routes Installed system too, and the Frame says the app already has a system.
+
+**Fails if:** any step runs `build-design-system`, a file under the system's folders changes, the system's own components count as app drift, a component the index lists is reported as missing, or a finding cites only the generic criteria while the system's rule covers it.
+
+## System repo
+
+**Input:** System repo, and "our UI is a mess, fix it". Then "document all our components".
+
+**Expect:** `system_repo` is yes and the state is `system repo`. Both asks run `build-design-system` in harden mode with the pilot on the system's own example page, and the second adds "document everything", since half the families have no spec. No migrate audit runs, and Next offers the Installed system route in the apps that consume it.
+
+**Fails if:** the route is Adopt, Audit or Seed, a migration plan is written, or the run invents an app screen as its pilot.
 
 ## Small app
 

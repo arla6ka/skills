@@ -7,6 +7,7 @@ Triage runs one script and a few reads, with no browser or subagent. It decides 
 - Running the script
 - Signals
 - The foundation
+- The installed system
 - The app's state
 - The ask's intent
 - The one question
@@ -36,6 +37,8 @@ find . -name '*.tokens.json' -o -name 'tailwind.config.*' -o -path '*/tokens/*.j
 cat components.json package.json   # foundation: shadcn config, or a UI library dependency
 ```
 
+With an installed system, add `--exclude-dir=<name>` for its folders, and read its stylesheets as the token source (The installed system).
+
 In a monorepo, run it per app folder, each into its own subfolder of `triage/`. After editing the script, run `triage.sh --self-test`. It ends `all as expected`.
 
 ## Signals
@@ -44,7 +47,7 @@ Two units. A **line** signal counts source lines, so a line holding three hex va
 
 Every count leaves out the paths in `build-design-system/references/inventory.md` (Excluded paths), build output included, so a route folder named `build` is listed by hand. The script adds `scripts/`, `fixtures/` and `static/system/`, because the build copies its check scripts and fixtures into `scripts/`, check fixtures also sit in plain `fixtures/` folders, and some frameworks serve generated twins from `static/`. Without the rule the build's own fixtures and generated HTML would count as drift. `scaffold_files_skipped` says how many files that left out. Presence signals such as `llms_txt` still see `public/llms.txt`.
 
-Adoption also leaves out the component layer, the token source, examples, docs, tests and stories, or a system's own `var()` uses would make a weak system read as settled. Component and family counts leave out the same examples, docs and check folders, so planted fixtures never read as duplicate families. `component_specs` is the one count that reads `docs/system`, where specs live, so a triage after a run sees the specs it wrote. It leaves out twins and `spec-template.md`.
+An installed system's folders (`installed_system_dirs`) leave every count, as the system's own code, and its stylesheets join `token-files.txt`. Adoption also leaves out the component layer, the token source, examples, docs, tests and stories, or a system's own `var()` uses would make a weak system read as settled. Component and family counts leave out the same examples, docs and check folders, so planted fixtures never read as duplicate families. `component_specs` is the one count that reads `docs/system`, where specs live, so a triage after a run sees the specs it wrote. It leaves out twins and `spec-template.md`.
 
 | Signal | Unit | Measures | Feeds |
 |---|---|---|---|
@@ -72,6 +75,8 @@ Adoption also leaves out the component layer, the token source, examples, docs, 
 | `harden_dirs` | folders | layer folders with 5 or more components that 3 or more routes import. `harden-dirs.tsv` gives both counts | Harden or Build |
 | `stray_dirs` | folders | layer folders that duplicate a family already in a harden dir, such as `components/custom/Button.tsx` beside `components/ui/button.tsx`. A stray is not the layer, so its raw values count as product code before and after, even inside a layer folder. The shadcn ui folder and harden dirs are never strays. `stray-dirs.tsv` names the duplicate | stable before-and-after counts, and harden's stray-code list |
 | `system_docs_routes`, `llms_txt`, `registry_json`, `stories` | files | docs a person or agent can read. `registry_json` is `shadcn` (an `items` list), `designhow` (a `components` list), `other` or `no` | settled or documented |
+| `installed_system`, `installed_system_skill`, `installed_system_dirs` | names, paths | a design system installed into the app from a registry: a skill in `.claude/skills/<name>/` or `.agents/skills/<name>/` whose description calls it a design system's rules, beside `components/<name>/` holding `tokens.css`, `styles.css` or `theme.css`, or named by the skill's own add command. The dirs are `components/<name>` and `lib/<name>`, under `src/` too | the **installed** state, and the criteria every step reads |
+| `system_repo` | yes or no | no installed system, 5 or more own components, and either 1 or fewer routes with a registry or token source, or a registry that lists 5 or more component files and at least half of them | the **system repo** state |
 | `build_record`, `migration_runs`, `boss_state` | paths | earlier runs | resume |
 | `run_script`, `routes`, `source_lines`, `families_present` | routes, lines, families | whether the app can start, and how big it is. A file-based router (Next, Nuxt, SvelteKit, Astro, Remix) gives route files, private folders left out. Any other app gives the distinct paths in its router config (`path:`, `<Route path=`), `*` left out, so a `pages/` folder there is not a route list. `routes.txt` has one route per line, `route-files.txt` the files they render | which steps can verify visually, and the default flows for a review |
 | `ui_lines`, `small_app` | lines, yes or no | lines of markup and style files, and whether `routes` is 8 or fewer with `ui_lines` under 3,000 | the small-app fast path (`routes.md`, Small app) |
@@ -94,16 +99,29 @@ Two foundations can show at once, such as shadcn beside a leftover component lib
 
 With no foundation and nothing shipped yet, the default is shadcn, per `base-shadcn.md`. Say so in the Frame, along with the capture tools, `capture.mjs` for captures and a browser tool for one-off evidence (see `browser.md`).
 
+## The installed system
+
+An installed system is the source of truth. The app adopted it from a registry, its owner changes it, and its `SKILL.md` holds the rules. The boss treats the app as one moving onto a settled system, so its routes are migrate and review, never seed, build or harden.
+
+- Read `installed_system_skill` whole before the Frame: its steps, priority order, global rules, reject list and component index. Every brief names that path as the criteria, ahead of any sibling's default criteria, and the Frame says the app runs on `<name>`.
+- Its folders are outside every worker's scope. A screen that bypasses a component the index lists is legacy for `migrate-design-system`, never drift to build a second component from.
+- A component the index lists but the app has not added yet is not a gap. The system's own add command installs it, as a decision row.
+- Propose extending the system only for a pattern a screen needs that the index lacks. Record it where the system keeps its coverage gaps: the page or file its `SKILL.md` names, else a gaps table in the same shape inside the run folder for the owner. The screen keeps its current code under a gate until the owner ships the component.
+
+Two installed systems at once take the one product code imports most, and the Frame names the other, the same as two foundations.
+
 ## The app's state
 
 Apply these in order and take the first that matches. Write the deciding signal next to the state.
 
 1. `boss_state` is set. Resume. No new triage decision.
-2. `routes` is 1 or fewer and `product_component_defs` is 2 or fewer. **empty**. That is at most a starter page and its layout, so the app has no product route, and the system starts from brand material or shadcn defaults. The component count keeps out an app whose routes live in code, which the script cannot see. A small shipped app gets Build, never Seed.
-3. `token_files` is 0 and `custom_property_defs` is under 20. **none**.
-4. `adoption_pct` is under 80, `palette_pct` is 30 or more, or `families_with_2plus` is 2 or more. **drifting**.
-5. `system_docs_routes` is 0, or `llms_txt` is no, or `registry_json` is no. **settled**.
-6. Otherwise **documented**.
+2. `installed_system` is set. **installed**. The installed system is the target (The installed system), whatever the counts outside it say.
+3. `system_repo` is yes. **system repo**. The design system is the product, so there is no app to migrate or audit, and the work is hardening and documenting it.
+4. `routes` is 1 or fewer and `product_component_defs` is 2 or fewer. **empty**. That is at most a starter page and its layout, so the app has no product route, and the system starts from brand material or shadcn defaults. The component count keeps out an app whose routes live in code, which the script cannot see. A small shipped app gets Build, never Seed.
+5. `token_files` is 0 and `custom_property_defs` is under 20. **none**.
+6. `adoption_pct` is under 80, `palette_pct` is 30 or more, or `families_with_2plus` is 2 or more. **drifting**.
+7. `system_docs_routes` is 0, or `llms_txt` is no, or `registry_json` is no. **settled**.
+8. Otherwise **documented**.
 
 `drifting` and `settled` each split by whether a component layer worth hardening exists, which is when `harden_dirs` is set: 5 or more components imported by 3 or more routes. `build-design-system/references/modes.md` keeps a standalone copy of this rule. A smaller or less used layer gets built, not hardened. A system with such a layer is **weak** when `component_specs` is 0 or its families still duplicate. Weak systems get hardened before anyone migrates onto them.
 
@@ -179,4 +197,4 @@ When a design source, such as a brand kit or a design file, defines a look the a
 
 ## Blind spots
 
-The script counts text. It misses class names built at runtime, styles set in script, and values from a CMS, and it over-counts a hex-looking anchor such as `#add`. Families match on name suffix, so `SaveCTA` counts as a button only if it copies Button's classes. A wrapper counts as its canonical member only when it imports and renders it, so one that renders a library's `Button` still counts as its own. Raw copies need 3 shared static classes, so a copy that drifted further is missed. It cannot tell a stock shadcn file from a heavily edited one with the stock name. That drift is measured against the registry, per `base-shadcn.md`. Say in the Frame that the counts are a first read, and let the siblings' own inventories give the numbers the report uses.
+The script counts text. It misses class names built at runtime, styles set in script, and values from a CMS, and it over-counts a hex-looking anchor such as `#add`. Families match on name suffix, so `SaveCTA` counts as a button only if it copies Button's classes. A wrapper counts as its canonical member only when it imports and renders it, so one that renders a library's `Button` still counts as its own. Raw copies need 3 shared static classes, so a copy that drifted further is missed. It cannot tell a stock shadcn file from a heavily edited one with the stock name. It finds an installed system only by its skill and folder, so a system copied in by hand with no skill reads as the app's own layer, and a system repo with more app routes than registry files reads as an app. Name either in the ask and the state follows it. That drift is measured against the registry, per `base-shadcn.md`. Say in the Frame that the counts are a first read, and let the siblings' own inventories give the numbers the report uses.

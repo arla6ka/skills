@@ -27,7 +27,7 @@ function TooltipContent({className, side = 'top', align = 'center', sideOffset =
   const container = useLimePortal();
   return (
     <TooltipPrimitive.Portal container={container}>
-      <TooltipPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} collisionPadding={8} className="isolate z-50">
+      <TooltipPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} collisionPadding={8} className="isolate z-(--z-popover)">
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={typeof className === 'function' ? className : cn(

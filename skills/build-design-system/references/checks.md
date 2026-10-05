@@ -5,6 +5,7 @@ Phase 5 turns every rule a script can see into a check that fails a build. Rule 
 Contents
 
 - The starter
+- Projects with a design lint
 - What the check covers
 - Bans
 - Exempting stock files
@@ -39,9 +40,19 @@ node scripts/check-system.mjs --explain trap/button-div   # the rule, why, and t
 node /abs/skills/build-design-system/scripts/check-system.mjs --root /abs/app --no-self-test   # from any folder
 ```
 
-Read the config `--init` writes and the lines it prints. `tokenSources` (files whose custom property lines may hold raw values), `uiDir`, `registry`, `driftList`, `allowlist` and `nativeControls` are guesses from the repo. `nativeControls` maps each native tag to the component the ui files export, such as `<button>` to `Button`. `--init` never writes an empty value such as `nativeControls: {}`, which would turn a rule off. It leaves an unfillable key out, so the default applies, and prints why. An old `{}` counts as unset. `rulesOff` is the only way to turn a rule off. `sharedTokens` lists `:root` colors meant to hold one value in every theme. `varIgnore` lists custom property prefixes a library sets at runtime.
+Read the config `--init` writes and the lines it prints. `tokenSources` (files whose custom property lines may hold raw values), `uiDir`, `registry`, `driftList`, `allowlist` and `nativeControls` are guesses from the repo. `nativeControls` maps each native tag to the component the ui files export, such as `<button>` to `Button`. `--init` never writes an empty value such as `nativeControls: {}`, which would turn a rule off. It leaves an unfillable key out, so the default applies, and prints why. An old `{}` counts as unset. `rulesOff` turns a rule off, and so does `projectLint` for the four rules below. `sharedTokens` lists `:root` colors meant to hold one value in every theme. `varIgnore` lists custom property prefixes a library sets at runtime.
 
 The scan skips the Excluded paths in `inventory.md`, plus all of `public/`, which holds only generated output, and `scripts/`, which holds the check itself. It always scans the docs' example files (`examplesDir` in `scripts/gen-docs.config.json`, default `docs/system/examples`), since readers copy them into product code. The native-button rule appears on the first run after a canonical Button exists. Everything the check reads lives in the repo, never in `.design-system/` or a skill folder.
+
+## Projects with a design lint
+
+A design lint knows the design system's classes and components, so it already covers `rule/raw-value`, `rule/palette-use`, `rule/arbitrary-value` and `rule/component-override`. The check finds one in two places: an installed design system's own lint config at the root (`<name>.eslint.config.mjs` beside `components/<name>/` or the system's skill), or an ESLint or Oxlint config that loads one. It skips those four rules and prints a note naming the config it deferred to, so one finding never fails under two IDs.
+
+1. Run the project's design lint first and record its command and exit code. Its findings are the four rules' findings, reported under the lint's own rule names.
+2. Run the check for every other rule. The lint's other rules have no twin to skip, so `rule/inline-px` and the rest still run.
+3. The first ratchet run after the switch reads the four counts as a fall. Lock it with `--ratchet-update` in the same commit.
+
+The lint goes in the check command ahead of the script, so a clean clone runs both. Set `"projectLint": false` in the config when the lint turns those rules off, so the check runs them again.
 
 ## What the check covers
 
