@@ -1,0 +1,4 @@
+input { font-size: var(--text-sm); }
+@media (pointer: coarse) {
+  input { font-size: max(16px, 1em); }
+}

@@ -134,11 +134,11 @@ A repo keeps only fixtures for rules the run added, in scripts/fixtures/check-sy
 const RULES = {
   "rule/raw-value": ["Hex, rgb(), hsl() or oklch() outside a token source line, including inside Tailwind arbitrary values", "use a semantic token"],
   "rule/named-color": ["A CSS named color in a style, in any quote style", "use a semantic token (transparent, currentColor and inherit pass)"],
-  "rule/arbitrary-value": ["A Tailwind arbitrary value such as p-[13px] or bg-[#0f766e]", "use a scale step or a token utility"],
+  "rule/arbitrary-value": ["A Tailwind arbitrary value such as p-[13px] or bg-[#0f766e]. A transition property list, a CSS-wide keyword, a grid area name and math built only from tokens and env() pass", "use a scale step or a token utility"],
   "rule/palette-use": ["A Tailwind palette class such as text-gray-500, or var(--color-teal-700). Also bg-white, text-black and the other solid white or black utilities when the theme defines a role for that job: a surface (--background, --card, --popover) for bg, a foreground for text, fill and stroke, a border, input or ring for border, outline and ring. Opacity forms such as bg-black/50 and transparent pass", "use a semantic utility such as text-muted-foreground or bg-background"],
   "rule/doubled-utility": ["A Tailwind v4 utility that repeats its property word, such as text-text-muted, bg-bg-subtle or border-border-strong. It comes from a --color-<role> token whose role starts with text, bg or border", "rename the role so the utility reads once: --color-muted-foreground, --color-fg-muted, --color-edge"],
   "rule/inline-px": ["A px, rem or em length for spacing, radius, size or font size in an inline style", "use a spacing, radius, size or type token or utility"],
-  "rule/css-px": ["A px, rem or em length for spacing, radius, type or size in a CSS file, outside a custom property line (0 and 1px pass; rem and em pass in line-height, letter-spacing and viewport math)", "use a spacing, radius, type or size token"],
+  "rule/css-px": ["A px, rem or em length for spacing, radius, type or size in a CSS file, outside a custom property line (0 and 1px pass; rem and em pass in line-height, letter-spacing and viewport math; the touch zoom floor font-size: max(16px, 1em) passes)", "use a spacing, radius, type or size token"],
   "rule/token-parity": ["A var(--x) or @theme reference no CSS file defines, or a color key that :root and a dark theme block do not both define", "define the token, fix the name, or list it in sharedTokens"],
   "trap/native-control": ["A native control where a system component exists", "use the system component"],
   "trap/button-div": ["onClick, onPointerDown or onMouseDown on a non-interactive element or an <a> with no href, or tabIndex with onKeyDown on one. A native <dialog> with onCancel passes (the backdrop click)", "render a <button>, or an <a href> when it navigates. Never move the handler into an effect to hide it from this rule"],
@@ -737,6 +737,20 @@ const GENERIC = /^((inline-)?flex|grid|block|relative|items-.*|justify-.*|gap-.*
 
 // A line of a customized ui file that is identical (whitespace aside) to a line of upstream's copy is upstream's.
 const normLine = (l) => l.trim().replace(/\s+/g, " ");
+// Arbitrary values that pick no step off a scale, so rule/arbitrary-value passes them: a transition's property list
+// (what trap/motion-transition-all asks for), a CSS-wide keyword, a grid area or line name, and math built only from
+// tokens, env(), unitless numbers, % and viewport units, such as calc(var(--header)+env(safe-area-inset-top)).
+const CSS_WIDE = /^(?:inherit|initial|unset|revert|revert-layer)$/;
+function arbitraryOk(util, value) {
+  if (util === "transition" && /^[a-z-]+(?:,[a-z-]+)*$/.test(value) && !/(?:^|,)all(?:,|$)/.test(value)) return true;
+  if (CSS_WIDE.test(value)) return true;
+  if (/^\[grid-(?:area|row|column)(?:-start|-end)?\]$/.test(util) && /^[a-z_][\w-]*$/i.test(value)) return true;
+  if (/^(?:calc|min|max|clamp|env)\(/.test(value) && /var\(--|env\(/.test(value)) {
+    const rest = value.replace(/var\(--[\w-]+\)|env\([\w-]+\)/g, "").replace(/\b(?:calc|min|max|clamp)\(/g, "(").replace(/\d*\.?\d+(?:[dsl]?v[hw]|%)?/g, "");
+    return /^[()+\-*/_,]*$/.test(rest);
+  }
+  return false;
+}
 // Only literal-value rules exempt upstream lines. A var() upstream reads and the app never defines is still broken.
 const VALUE_RULES = new Set(["rule/raw-value", "rule/named-color", "rule/arbitrary-value", "rule/palette-use", "rule/inline-px", "rule/css-px"]);
 function checkFile(cfg, rel, report, stockLines) {
@@ -788,10 +802,11 @@ function checkFile(cfg, rel, report, stockLines) {
     for (const m of code.matchAll(/(?<![\w\-[\]])((?:[a-z0-9-]+:)*!?-?[a-z][a-z0-9]*(?:-[a-z0-9.]+)*)-\[([^\]\s'"`]+)\](?!:|\/[\w-]*:|[\w-])/g)) {
       if (!mask[m.index] || /^var\(--[\w-]+\)$/.test(m[2])) continue;
       const util = m[1].replace(/^(?:[a-z0-9-]+:)+/, "").replace(/^!?-?/, "");
+      if (arbitraryOk(util, m[2])) continue;
       hit(m.index, "rule/arbitrary-value", `${m[1].replace(/^(?:[a-z0-9-]+:)+/, "")}-[${m[2]}]`, nearestToken(cfg, util, m[2]));
     }
     for (const m of code.matchAll(/(?<![\w\-[\]&])\[([a-z][a-z-]*):([^\]\s'"`]+)\](?!:|\/[\w-]*:|[\w-])/g)) {
-      if (mask[m.index]) hit(m.index, "rule/arbitrary-value", m[0], nearestToken(cfg, m[1], m[2]));
+      if (mask[m.index] && !arbitraryOk(`[${m[1]}]`, m[2])) hit(m.index, "rule/arbitrary-value", m[0], nearestToken(cfg, m[1], m[2]));
     }
     const pal = new RegExp(`(?<![\\w-])(?:[a-z0-9-]+:)*(?:bg|text|border(?:-[trblxyse])?|ring(?:-offset)?|fill|stroke|from|via|to|outline|decoration|divide|placeholder|caret|accent|shadow)-(?:${PALETTE})-(?:50|[1-9]00|950)(?:\\/\\d+)?(?![\\w-])`, "g");
     for (const m of code.matchAll(pal)) if (mask[m.index]) hit(m.index, "rule/palette-use", m[0]);
@@ -816,7 +831,9 @@ function checkFile(cfg, rel, report, stockLines) {
       const at = m.index + m[0].indexOf(m[1]);
       const relOk = /^(?:line-height|letter-spacing)$/.test(m[1]) || /\d(?:[dsl]?v[hw]|%)/.test(m[2]);
       const len = [...m[2].matchAll(/(-?\d*\.?\d+)(px|r?em)\b/g)].filter((x) => x[2] === "px" ? Math.abs(Number(x[1])) > 1 : !relOk && Number(x[1]) !== 0);
-      if (len.length && !tokenLine(at)) hit(at, "rule/css-px", `${m[1]}: ${m[2].trim()}`, nearestToken(cfg, m[1], len[0][0]));
+      // The touch zoom floor, font-size: max(16px, <a token or em size>), is trap/touch-input-zoom's fix.
+      const zoomFloor = m[1] === "font-size" && /^max\(\s*16px\s*,[^,]+\)$/.test(m[2].trim()) && !/\dpx\b/.test(m[2].trim().slice(4).replace(/^\s*16px/, ""));
+      if (len.length && !zoomFloor && !tokenLine(at)) hit(at, "rule/css-px", `${m[1]}: ${m[2].trim()}`, nearestToken(cfg, m[1], len[0][0]));
     }
   }
 
