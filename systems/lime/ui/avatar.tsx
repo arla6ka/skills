@@ -2,7 +2,7 @@
 
 import {Avatar as AvatarPrimitive} from '@base-ui/react/avatar';
 import {cva, type VariantProps} from 'class-variance-authority';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 
 // A person, such as a friend. The image fades to initials when it fails to load. The ring on the group keeps
 // stacked faces apart on any surface.
@@ -33,7 +33,7 @@ const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2)
 
 function Avatar({className, size, src, name, ...props}: AvatarProps) {
   return (
-    <AvatarPrimitive.Root data-slot="avatar" className={typeof className === 'function' ? className : cn(avatarVariants({size}), className)} {...props}>
+    <AvatarPrimitive.Root data-slot="avatar" className={mergeClass(avatarVariants({size}), className)} {...props}>
       {src && <AvatarPrimitive.Image src={src} alt={name} className="size-full object-cover"/>}
       <AvatarPrimitive.Fallback role="img" aria-label={name} className="flex size-full items-center justify-center">{initials(name)}</AvatarPrimitive.Fallback>
     </AvatarPrimitive.Root>

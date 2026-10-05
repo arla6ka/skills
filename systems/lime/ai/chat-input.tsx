@@ -30,24 +30,34 @@ type ChatInputProps = Omit<React.ComponentProps<'form'>, 'onSubmit' | 'onChange'
   disabled?: boolean;
   /** One or two 32px ghost icon buttons before the text, such as attach. */
   actions?: React.ReactNode;
+  /** The names of the field, Send and Stop, for another language. The placeholder is its own prop. */
+  labels?: ChatInputLabels;
 };
 
-// 8 lines of 24px, plus the field's 4px top and bottom padding.
-const MAX_HEIGHT = 200;
+type ChatInputLabels = {
+  /** The field's label, read by screen readers. */
+  message?: string;
+  send?: string;
+  stop?: string;
+};
 
-function ChatInput({value, defaultValue = '', onValueChange, onSubmit, placeholder = 'Ask about your money', amount, available, currency, running, onStop, disabled, actions, className, ...props}: ChatInputProps) {
+const defaultLabels: Required<ChatInputLabels> = {message: 'Message', send: 'Send', stop: 'Stop'};
+
+function ChatInput({value, defaultValue = '', onValueChange, onSubmit, placeholder = 'Ask about your money', amount, available, currency, running, onStop, disabled, actions, labels, className, ...props}: ChatInputProps) {
+  const words = {...defaultLabels, ...labels};
   const [inner, setInner] = useState(defaultValue);
   const text = value ?? inner;
   const field = useRef<HTMLTextAreaElement>(null);
   const id = useId();
   const canSend = !disabled && !running && text.trim().length > 0 && (amount === undefined || available === undefined || amountAffordability(amount, available) !== 'insufficient');
 
-  // Fit the field to its text on every change, typed or set from outside.
+  // Fit the field to its text on every change, typed or set from outside. max-h-50 caps it at 8 lines, so the
+  // height is the text's own and CSS clips it.
   useLayoutEffect(() => {
     const el = field.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT)}px`;
+    el.style.height = `${el.scrollHeight}px`;
   }, [text]);
 
   function set(next: string) {
@@ -69,13 +79,13 @@ function ChatInput({value, defaultValue = '', onValueChange, onSubmit, placehold
       onPointerDown={e => { if (e.target === e.currentTarget) { e.preventDefault(); field.current?.focus(); } }}
       className={cn(
         'flex w-full cursor-text items-end gap-1 rounded-sheet border border-line-strong bg-field p-1.5 transition-[border-color] duration-(--dur-instant)',
-        'focus-within:border-accent-line has-focus:border-accent-line data-disabled:cursor-not-allowed',
+        'focus-within:border-accent-line data-disabled:cursor-not-allowed',
         className,
       )}
       {...props}
     >
       {actions && <div data-slot="chat-input-actions" className="flex shrink-0 items-center">{actions}</div>}
-      <label htmlFor={id} className="sr-only">Message</label>
+      <label htmlFor={id} className="sr-only">{words.message}</label>
       <textarea
         ref={field}
         id={id}
@@ -91,17 +101,17 @@ function ChatInput({value, defaultValue = '', onValueChange, onSubmit, placehold
         // The box shows focus on its border (focus-within), so the field draws no ring of its own; Lime's base
         // focus-visible ring would otherwise sit inside the box as a square.
         className={cn(
-          'block h-8 max-h-50 min-w-0 flex-1 resize-none bg-transparent py-1 text-base leading-6 text-fg outline-none focus-visible:outline-none placeholder:text-fg-3 disabled:cursor-not-allowed disabled:text-fg-disabled',
+          'block h-8 max-h-50 min-w-0 flex-1 resize-none bg-transparent py-1 text-base leading-6 text-fg focus-visible:outline-none placeholder:text-fg-3 disabled:cursor-not-allowed disabled:text-fg-disabled',
           !actions && 'ps-2.5',
         )}
       />
       {amount !== undefined && <Amount value={amount} currency={currency} available={available} className="mb-1 shrink-0"/>}
       {running ? (
-        <Button type="button" variant="solid" size="icon-sm" aria-label="Stop" onClick={onStop}>
+        <Button type="button" variant="solid" size="icon-sm" aria-label={words.stop} onClick={onStop}>
           <span aria-hidden="true" className="size-2.5 bg-current"/>
         </Button>
       ) : (
-        <Button type="submit" size="icon-sm" aria-label="Send" disabled={!canSend}>
+        <Button type="submit" size="icon-sm" aria-label={words.send} disabled={!canSend}>
           <Icon icon={ArrowUp} size={16}/>
         </Button>
       )}
@@ -109,4 +119,4 @@ function ChatInput({value, defaultValue = '', onValueChange, onSubmit, placehold
   );
 }
 
-export {ChatInput, type ChatInputProps};
+export {ChatInput, type ChatInputProps, type ChatInputLabels};

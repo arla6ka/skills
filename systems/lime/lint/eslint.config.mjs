@@ -1,8 +1,9 @@
 // Lime's lint. Run it from the project root:
 //   npx eslint -c lime.eslint.config.mjs .
 // It flags what Lime's rules forbid in app code (raw colors, classes Lime's theme lacks, native controls, a second
-// primary action ...) and each message says what to use instead. Lime's own files under components/lime are held
-// to the rules that apply to them.
+// primary action ...) and each message says what to use instead. Lime's own components (components/lime/ui,
+// components/lime/ai, components/lime/icon.tsx and lib/lime) are held to the rules that apply to them; its blocks in
+// components/lime/blocks are screens the app owns, so they get the app rules.
 //
 // Already have an eslint.config? Add Lime to it instead:
 //   import lime from './lime.eslint.config.mjs';
@@ -37,5 +38,5 @@ export default [
     processor: 'lime/standalone',
     rules: lime.configs.app.rules,
   },
-  {files: ['**/components/lime/**'], rules: lime.configs.source.rules},
+  {files: ['**/components/lime/{ui,ai}/**', '**/components/lime/icon.tsx', '**/lib/lime/**'], rules: lime.configs.source.rules},
 ];

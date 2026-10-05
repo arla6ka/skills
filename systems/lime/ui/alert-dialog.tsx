@@ -2,7 +2,7 @@
 
 import {AlertDialog as AlertDialogPrimitive} from '@base-ui/react/alert-dialog';
 import {useLimePortal} from '../lib/portal';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 import {backdropClass, dialogVariants} from './dialog';
 
 // A blocking decision with no way out except choosing: delete a goal, discard a draft, send a large payment.
@@ -23,7 +23,7 @@ function AlertDialogContent({className, ...props}: AlertDialogPrimitive.Popup.Pr
   return (
     <AlertDialogPrimitive.Portal container={container}>
       <AlertDialogPrimitive.Backdrop data-slot="alert-dialog-backdrop" className={backdropClass}/>
-      <AlertDialogPrimitive.Popup data-slot="alert-dialog-content" className={typeof className === 'function' ? className : cn(dialogVariants({size: 'sm'}), className)} {...props}/>
+      <AlertDialogPrimitive.Popup data-slot="alert-dialog-content" className={mergeClass(dialogVariants({size: 'sm'}), className)} {...props}/>
     </AlertDialogPrimitive.Portal>
   );
 }
@@ -37,11 +37,11 @@ function AlertDialogFooter({className, ...props}: React.ComponentProps<'div'>) {
 }
 
 function AlertDialogTitle({className, ...props}: AlertDialogPrimitive.Title.Props) {
-  return <AlertDialogPrimitive.Title data-slot="alert-dialog-title" className={typeof className === 'function' ? className : cn('title-overlay', className)} {...props}/>;
+  return <AlertDialogPrimitive.Title data-slot="alert-dialog-title" className={mergeClass('title-overlay', className)} {...props}/>;
 }
 
 function AlertDialogDescription({className, ...props}: AlertDialogPrimitive.Description.Props) {
-  return <AlertDialogPrimitive.Description data-slot="alert-dialog-description" className={typeof className === 'function' ? className : cn('text-sm text-fg-2', className)} {...props}/>;
+  return <AlertDialogPrimitive.Description data-slot="alert-dialog-description" className={mergeClass('text-sm text-fg-2', className)} {...props}/>;
 }
 
 function AlertDialogClose(props: AlertDialogPrimitive.Close.Props) {

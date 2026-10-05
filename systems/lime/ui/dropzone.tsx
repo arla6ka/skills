@@ -59,7 +59,8 @@ function Dropzone({accept, multiple, maxSize, disabled, onFiles, onReject, title
       data-over={over || undefined}
       data-disabled={disabled || undefined}
       onDragOver={e => { if (!disabled) { e.preventDefault(); setOver(true); } }}
-      onDragLeave={() => setOver(false)}
+      // Leaving for a child (the icon, the text) is still over the zone; only leaving the label ends it.
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(false); }}
       onDrop={e => { e.preventDefault(); setOver(false); if (!disabled) take(e.dataTransfer.files); }}
       className={cn(
         'flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-panel border border-dashed border-control bg-surface px-6 py-10 text-center',

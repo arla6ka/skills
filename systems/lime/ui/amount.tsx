@@ -13,8 +13,19 @@ type FormatOptions = {currency?: string; compact?: boolean; signed?: boolean};
 
 const MINUS = '−';
 
-/** The amount as text: "$12.40", "−$12.40", or "+$12.40" with `signed`. Compact drops the cents. */
-function formatAmount(value: number, {currency = 'USD', compact, signed}: FormatOptions = {}) {
+const UNAVAILABLE = 'Unavailable';
+
+/** A finite number, or a string that is one ("12.40"), as a number; anything else, such as "" or "$12", is null. */
+function toMoney(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : Number.NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
+/** The amount as text: "$12.40", "−$12.40", or "+$12.40" with `signed`. Compact drops the cents. A value that is
+ * not a number reads "Unavailable", never "$NaN". */
+function formatAmount(raw: number, {currency = 'USD', compact, signed}: FormatOptions = {}) {
+  const value = toMoney(raw);
+  if (value === null) return UNAVAILABLE;
   const digits = compact ? {minimumFractionDigits: 0, maximumFractionDigits: 0} : {};
   const number = new Intl.NumberFormat('en-US', {style: 'currency', currency, ...digits}).format(Math.abs(value));
   if (value < 0) return `${MINUS}${number}`;
@@ -22,15 +33,19 @@ function formatAmount(value: number, {currency = 'USD', compact, signed}: Format
 }
 
 /** The amount in words for a screen reader: "minus 12.40 US dollars". */
-function spokenAmount(value: number, {currency = 'USD', signed}: Pick<FormatOptions, 'currency' | 'signed'> = {}) {
+function spokenAmount(raw: number, {currency = 'USD', signed}: Pick<FormatOptions, 'currency' | 'signed'> = {}) {
+  const value = toMoney(raw);
+  if (value === null) return 'amount unavailable';
   const words = new Intl.NumberFormat('en-US', {style: 'currency', currency, currencyDisplay: 'name'}).format(Math.abs(value));
   if (value < 0) return `minus ${words}`;
   return signed && value > 0 ? `plus ${words}` : words;
 }
 
 /** Whether `available` covers an outgoing `value`. Tight is under 20% of the payment left after paying. */
-function amountAffordability(value: number, available: number | null | undefined): Affordability {
-  if (available === null || available === undefined || !Number.isFinite(available)) return 'unknown';
+function amountAffordability(raw: number, rawAvailable: number | null | undefined): Affordability {
+  const value = toMoney(raw);
+  const available = toMoney(rawAvailable);
+  if (value === null || available === null) return 'unknown';
   const spend = value < 0 ? -value : 0;
   if (spend > available) return 'insufficient';
   if (spend > 0 && available - spend < spend * 0.2) return 'tight';
@@ -75,6 +90,9 @@ function Amount({value, currency = 'USD', available, signed, compact, approximat
   const afford = amountAffordability(value, available);
   const resolved = tone ?? (afford === 'insufficient' ? 'danger' : afford === 'tight' ? 'warn' : 'neutral');
   const base = formatAmount(value, {currency, compact, signed});
+  if (base === UNAVAILABLE) {
+    return <span data-slot="amount" data-affordability={afford} className={cn(amountVariants({tone: tone ?? 'neutral', size}), className)} {...props}>{UNAVAILABLE}</span>;
+  }
   const text = approximate ? `~${base}` : atLeast ? `${base}+` : base;
   const spoken = `${approximate ? 'about ' : atLeast ? 'at least ' : ''}${spokenAmount(value, {currency, signed})}${afford === 'insufficient' ? ', more than you have available' : ''}`;
   return (
@@ -85,4 +103,4 @@ function Amount({value, currency = 'USD', available, signed, compact, approximat
   );
 }
 
-export {Amount, amountAffordability, formatAmount, spokenAmount, amountVariants, type AmountProps, type Affordability};
+export {Amount, amountAffordability, formatAmount, spokenAmount, toMoney, amountVariants, type AmountProps, type Affordability};

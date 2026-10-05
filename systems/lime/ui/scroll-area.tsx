@@ -1,7 +1,7 @@
 'use client';
 
 import {ScrollArea as ScrollAreaPrimitive} from '@base-ui/react/scroll-area';
-import {cn} from '../lib/utils';
+import {cn, mergeClass} from '../lib/utils';
 
 // A scrolling region with a slim thumb that appears while the pointer is over it or the region scrolls.
 // Give it a height. The viewport is focusable, so keyboard users can scroll it with the arrow keys.
@@ -12,8 +12,8 @@ type ScrollAreaProps = ScrollAreaPrimitive.Root.Props & {
 
 function ScrollArea({className, children, orientation = 'vertical', ...props}: ScrollAreaProps) {
   return (
-    <ScrollAreaPrimitive.Root data-slot="scroll-area" className={typeof className === 'function' ? className : cn('relative overflow-hidden', className)} {...props}>
-      <ScrollAreaPrimitive.Viewport data-slot="scroll-area-viewport" className="size-full rounded-[inherit] outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring">
+    <ScrollAreaPrimitive.Root data-slot="scroll-area" className={mergeClass('relative overflow-hidden', className)} {...props}>
+      <ScrollAreaPrimitive.Viewport data-slot="scroll-area-viewport" className="size-full rounded-[inherit] focus-visible:-outline-offset-2">
         {children}
       </ScrollAreaPrimitive.Viewport>
       {orientation !== 'horizontal' && <ScrollBar orientation="vertical"/>}

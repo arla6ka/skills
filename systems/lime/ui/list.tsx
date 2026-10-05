@@ -45,13 +45,13 @@ type ListItemProps = Omit<React.ComponentProps<'li'>, 'title' | 'onClick'> & {
 };
 
 const rowClass = cn(
-  'relative flex w-full min-h-14 items-center gap-3 p-4 text-start outline-none',
-  'focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
+  'relative flex w-full min-h-14 items-center gap-3 p-4 text-start',
+  'focus-visible:-outline-offset-2',
   // The hairline sits under the text, not the leading mark, and the last row has none.
   'after:absolute after:inset-x-4 after:bottom-0 after:h-px after:bg-line group-last/item:after:hidden',
 );
 
-const pressable = 'cursor-pointer transition-colors duration-(--dur-instant) hover:bg-surface-2 active:bg-surface-3 group-data-[variant=grouped]/list:hover:bg-surface-2';
+const pressable = 'cursor-pointer transition-colors duration-(--dur-instant) hover:bg-surface-2 active:bg-surface-3';
 
 function ListItem({title, description, leading, trailing, chevron, href, onClick, disabled, menu, className, ...props}: ListItemProps) {
   const showChevron = chevron ?? Boolean(href);

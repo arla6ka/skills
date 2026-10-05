@@ -12,7 +12,8 @@
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
 }
-[data-system="lime"][data-theme="dark"], .lime[data-theme="dark"] { color-scheme: dark; }
+/* The same four dark selectors as tokens.css, so native controls and scrollbars turn dark with the tokens. */
+[data-system="lime"][data-theme="dark"], .lime[data-theme="dark"], [data-theme="dark"] [data-system="lime"], [data-theme="dark"] .lime { color-scheme: dark; }
 .lime :where(*, ::before, ::after), [data-system="lime"] :where(*, ::before, ::after) { box-sizing: border-box; border: 0 solid var(--line); margin: 0; padding: 0; }
 .lime :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, pre) { margin: 0; font: inherit; }
 .lime :where(ul, ol) { list-style: none; }
@@ -26,11 +27,13 @@
 .lime :where(td, th, time, data, output) { font-variant-numeric: tabular-nums; }
 /* Every interactive element declares its transition, so no control cuts while its neighbour tweens. */
 .lime :where(a, button, summary, input, select, textarea, label, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="switch"], [role="checkbox"], [role="radio"]) {
-  transition-property: color, background-color, border-color, outline-color, box-shadow, opacity;
+  transition-property: color, background-color, border-color, box-shadow, opacity;
   transition-duration: var(--dur-instant);
   transition-timing-function: var(--ease-out);
 }
 .lime ::selection { background: var(--accent); color: var(--on-accent); }
+/* The ring's colour is set at rest, so a control that transitions its colours never fades the ring in from black. */
+.lime :where(*, ::before, ::after), [data-system="lime"] :where(*, ::before, ::after) { outline-color: var(--ring); }
 /* Focus is a 2px outline in the accent's line step (3.95:1 on white), 2px out. Two classes of specificity beat a site-wide a:focus-visible. */
 .lime :where(*):is(:focus-visible, [data-force-focus-visible]) { outline: var(--line-focus) solid var(--ring); outline-offset: var(--focus-offset); }
 .lime, .lime * { scrollbar-color: var(--scrollbar-thumb) transparent; }

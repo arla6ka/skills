@@ -37,10 +37,9 @@ function pressKey(value: string, key: string, {decimal = true, maxDigits = 7}: {
 }
 
 const keyClass = cn(
-  'flex h-14 items-center justify-center rounded-panel text-2xl font-medium text-fg tabular-nums select-none outline-none',
+  'flex h-14 items-center justify-center rounded-panel text-2xl font-medium text-fg tabular-nums select-none',
   'transition-[background-color,scale] duration-(--dur-instant) [-webkit-tap-highlight-color:transparent]',
   'hover:bg-surface-2 active:bg-surface-3 active:scale-(--scale-press)',
-  'focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-(--focus-offset) focus-visible:outline-ring',
   'disabled:cursor-not-allowed disabled:text-fg-disabled disabled:hover:bg-transparent',
 );
 

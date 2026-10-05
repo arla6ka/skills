@@ -1,17 +1,20 @@
 import {readFileSync} from 'node:fs';
+import {handPickedValue, NAMED, RAW} from './value-rules.mjs';
 
 // Lime's lint rules, as an ESLint plugin. Plain ESM, no build step. Each rule flags one thing Lime's rules forbid
 // and says what to use instead; its docs link points at the Lime rule it enforces.
 //
 // Classes are read where Tailwind reads them: className (and any *ClassName prop) and the arguments of cn, clsx,
 // cva and the like. classes.json, written by the design.how registry build, lists every utility Lime's theme
-// defines and the stock Tailwind vocabulary Lime leaves out, so nothing here loads Tailwind.
+// defines and the stock Tailwind vocabulary Lime leaves out, so nothing here loads Tailwind. value-rules.mjs, also
+// written by the build, holds what a raw color and a hand-picked value are, shared with the registry's value check.
 
 const vocab = JSON.parse(readFileSync(new URL('./classes.json', import.meta.url), 'utf8'));
 
 const SITE = 'https://design.how/systems/lime';
 const RULES_PAGE = {lime: SITE, 'anti-slop': `${SITE}/foundations/anti-slop`, color: `${SITE}/foundations/color`, typography: `${SITE}/foundations/typography`,
-  motion: `${SITE}/foundations/motion`, iconography: `${SITE}/foundations/iconography`, spacing: `${SITE}/foundations/spacing`};
+  motion: `${SITE}/foundations/motion`, iconography: `${SITE}/foundations/iconography`, spacing: `${SITE}/foundations/spacing`,
+  skeleton: `${SITE}/components/skeleton`};
 /** The page that holds a Lime rule id, such as lime-tokens-only or anti-slop-no-caps. */
 const docsFor = id => RULES_PAGE[Object.keys(RULES_PAGE).find(prefix => id.startsWith(`${prefix}-`))] ?? SITE;
 
@@ -125,10 +128,6 @@ function suggest(c) {
 
 // ---- what each rule claims ----------------------------------------------------------------------------------------
 
-const RAW = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color)\(/;
-const NAMED = new Set(['white', 'black', 'red', 'green', 'blue', 'yellow', 'orange', 'purple', 'pink', 'gray', 'grey', 'silver', 'navy', 'teal', 'aqua',
-  'cyan', 'magenta', 'fuchsia', 'lime', 'maroon', 'olive', 'brown', 'gold', 'indigo', 'violet', 'coral', 'salmon', 'tomato', 'crimson', 'beige', 'ivory',
-  'khaki', 'lavender', 'turquoise', 'tan', 'whitesmoke', 'gainsboro', 'lightgray', 'lightgrey', 'darkgray', 'darkgrey', 'dimgray', 'slategray']);
 const arbitraryValue = c => c.base.match(/\[(.*)\]/)?.[1];
 
 /** A raw color in a class: a palette color (text-white, bg-gray-500) or a color value inside brackets. */
@@ -146,16 +145,16 @@ const gradient = c => GRADIENT_ROOTS.has(c.root) || /^-?bg-gradient-/.test(c.bas
 const caps = c => c.base === 'uppercase' || (/^-?tracking$/.test(c.root ?? '') && !['tight', 'normal'].includes(c.value) && !/^\(?--/.test(c.value ?? '') && !c.base.startsWith('-'))
   || /^\[(?:text-transform:uppercase|letter-spacing:)/.test(c.base);
 const transitionAll = c => c.base === 'transition-all' || c.base === 'transition-[all]';
+/** A looping animation Lime does not have: the spinner is its one loop. */
+const decorativeLoop = c => /^animate-(?:pulse|ping|bounce|shimmer)$/.test(c.base);
+/** A one-side border two or more px wide: with a color, it is a side rail. */
+const sideWidth = c => /^border-[lrse]-(?:[2-9]|\d{2,}|\[[^\]]*\d)/.test(c.base);
 const outlineNone = c => ['outline-none', 'outline-hidden', 'outline-0'].includes(c.base);
 
-/** The arbitrary value a hand-picked number makes; transition lists, keywords, proportions and var(--) are fine. */
+/** The arbitrary value a hand-picked number makes. */
 function handPicked(c) {
   const inside = arbitraryValue(c);
-  if (inside === undefined) return false;
-  // A grid track list in fr (grid-cols-[1fr_auto]) is a proportion, not a size.
-  if (/^transition-\[/.test(c.base) || !/\d/.test(inside.replace(/(?<![\w.])\d+(?:\.\d+)?fr(?![a-z0-9])/g, ''))) return false;
-  if (/^-?\d+(?:\.\d+)?(?:%|d?vh|svh|lvh|d?vw|svw|lvw)$/.test(inside)) return false;
-  return !/var\(--|--spacing\(/.test(inside);
+  return inside !== undefined && handPickedValue(c.base, inside);
 }
 
 // ---- reading classes out of the source -------------------------------------------------------------------------
@@ -314,7 +313,7 @@ const rules = {
       const bp = BREAKPOINTS.length && /\d?xl$|^(?:max|min)-/.test(variant) ? `; Lime's breakpoints are ${BREAKPOINTS.join(', ')}` : '';
       return `"${variant}:" is not a variant in Lime's theme${bp}.`;
     }
-    if (c.arbitrary || rawColor(c) || gradient(c) || caps(c) || c.base.startsWith('[')) return undefined;
+    if (c.arbitrary || rawColor(c) || gradient(c) || caps(c) || decorativeLoop(c) || c.base.startsWith('[')) return undefined;
     const has = limeHas(c);
     if (has !== false || !looksTailwind(c)) return undefined;
     const hint = suggest(c);
@@ -646,6 +645,95 @@ const rules = {
     },
   },
 
+  'dialog-controlled': {
+    meta: meta('dialog-controlled', 'Keep a Dialog, Sheet or AlertDialog mounted and open it with open.', 'anti-slop-dialog-controlled'),
+    create(context) {
+      let imports;
+      const OVERLAYS = new Set(['Dialog', 'Sheet', 'AlertDialog']);
+      const overlay = node => {
+        while (node?.type === 'ParenthesizedExpression') node = node.expression;
+        if (node?.type !== 'JSXElement') return undefined;
+        const name = elementName(node.openingElement);
+        return OVERLAYS.has(imports.get(name)?.imported ?? name) ? name : undefined;
+      };
+      const report = (node, name) => context.report({node, message: `<${name}> mounts only while open, so it cannot animate out or return focus; keep it mounted and pass open and onOpenChange.`});
+      return {
+        LogicalExpression(node) {
+          imports ??= limeImports(context);
+          const name = node.operator === '&&' && overlay(node.right);
+          if (name) report(node, name);
+        },
+        ConditionalExpression(node) {
+          imports ??= limeImports(context);
+          const empty = n => n.type === 'Literal' && n.value === null || n.type === 'Identifier' && n.name === 'undefined';
+          const name = (empty(node.alternate) && overlay(node.consequent)) || (empty(node.consequent) && overlay(node.alternate));
+          if (name) report(node, name);
+        },
+      };
+    },
+  },
+
+  'no-money-sign': {
+    meta: meta('no-money-sign', 'Format amounts with formatAmount or Amount, never by hand.', 'lime-money-sign'),
+    create(context) {
+      const message = 'A currency sign built by hand; use formatAmount(value) for text or <Amount value={value}/> from \'@/components/lime/ui/amount\', which bring the minus, separators and tabular figures.';
+      return {
+        TemplateLiteral(node) {
+          node.expressions.forEach((expr, i) => { if (/\$$/.test(node.quasis[i].value.cooked ?? '')) context.report({node: expr, message}); });
+        },
+        JSXExpressionContainer(node) {
+          const kids = node.parent?.children;
+          const before = kids?.[kids.indexOf(node) - 1];
+          if (before?.type === 'JSXText' && /\$$/.test(before.value) && node.expression.type !== 'JSXEmptyExpression') context.report({node, message});
+        },
+      };
+    },
+  },
+
+  'no-side-rail': {
+    meta: meta('no-side-rail', 'No colored bar on one edge.', 'anti-slop-no-side-rail'),
+    create(context) {
+      return {
+        JSXOpeningElement(node) {
+          const all = elementTokens(context.sourceCode, node);
+          const colored = all.some(({c}) => /^border(?:-[lrsexy])?$/.test(c.root ?? '') && (lime.colors.has(c.value) || stock.colors.has(c.value) || rawColor(c)));
+          if (!colored) return;
+          for (const {c, loc} of all) if (sideWidth(c)) context.report({loc, message: `"${c.utility}" with a border color draws a bar on one edge; mark a chosen row with bg-accent-wash, and keep borders 1px all round.`});
+        },
+      };
+    },
+  },
+
+  'skeleton-still': {
+    meta: meta('skeleton-still', 'No pulse, shimmer or bounce; the spinner is Lime\'s one loop.', 'skeleton-still'),
+    create(context) {
+      let imports;
+      return merge(
+        classRule({}, c => decorativeLoop(c) ? `"${c.utility}" loops for decoration; a Skeleton stays still, and the spinner is Lime's one looping motion.` : undefined).create(context),
+        {
+          JSXOpeningElement(node) {
+            imports ??= limeImports(context);
+            if (imports.get(elementName(node))?.imported !== 'Skeleton') return;
+            for (const {c, loc} of elementTokens(context.sourceCode, node)) {
+              if (/^animate-/.test(c.base) && !decorativeLoop(c)) context.report({loc, message: `"${c.utility}" animates a Skeleton; it stays still until the content lands.`});
+            }
+          },
+        },
+      );
+    },
+  },
+
+  'no-scroll-reveal': {
+    meta: meta('no-scroll-reveal', 'Content is there when it scrolls in; no reveal on scroll.', 'anti-slop-no-scroll-reveal'),
+    create(context) {
+      return {
+        JSXAttribute(node) {
+          if (attrName(node) === 'whileInView') context.report({node, message: 'whileInView fades or slides content in as it scrolls into view; render it in place, and keep motion for answers to what the person did.'});
+        },
+      };
+    },
+  },
+
   'no-second-icon-set': {
     meta: meta('no-second-icon-set', 'One icon set, through Lime\'s icon file.', 'iconography-one-source'),
     create(context) {
@@ -667,7 +755,7 @@ const rules = {
 const ids = Object.keys(rules);
 const WARN = new Set(['one-primary', 'no-emoji-or-em-dash']);
 /** Rules that guard app code only. Lime's own source builds the controls, so it may use what these forbid. */
-const APP_ONLY = new Set(['no-raw-color', 'no-outline-none', 'no-arbitrary-value', 'no-inline-style', 'no-dynamic-class', 'no-native-control', 'field-label', 'no-restyle', 'lime-scarce', 'one-primary', 'no-second-icon-set']);
+const APP_ONLY = new Set(['no-money-sign', 'no-raw-color', 'no-outline-none', 'no-arbitrary-value', 'no-inline-style', 'no-dynamic-class', 'no-native-control', 'field-label', 'no-restyle', 'lime-scarce', 'one-primary', 'no-second-icon-set']);
 
 /**
  * Run alone (npx eslint -c lime.eslint.config.mjs), ESLint knows only Lime's rules, so an eslint-disable comment for

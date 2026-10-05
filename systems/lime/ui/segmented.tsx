@@ -4,7 +4,7 @@ import {Radio as RadioPrimitive} from '@base-ui/react/radio';
 import {RadioGroup as RadioGroupPrimitive} from '@base-ui/react/radio-group';
 import {cva, type VariantProps} from 'class-variance-authority';
 import {createContext, useContext} from 'react';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
 
 // A short row of exclusive options that sets a value: Grid or List, Weekly or Monthly, 9:16 or 16:9. The
 // chosen segment is a white pill lifted off the grey track. Arrow keys move and choose. Two to five
@@ -30,7 +30,7 @@ function Segmented({className, size = 'md', fill, onValueChange, children, ...pr
       <RadioGroupPrimitive
         data-slot="segmented"
         onValueChange={value => onValueChange?.(value as string)}
-        className={typeof className === 'function' ? className : cn(trackVariants({size, fill}), className)}
+        className={mergeClass(trackVariants({size, fill}), className)}
         {...props}
       >
         {children}
@@ -44,14 +44,13 @@ function SegmentedItem({className, children, ...props}: RadioPrimitive.Root.Prop
   return (
     <RadioPrimitive.Root
       data-slot="segmented-item"
-      className={typeof className === 'function' ? className : cn(
+      className={mergeClass([
         'inline-flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-control px-3 font-medium whitespace-nowrap text-fg-2 select-none',
         'transition-[background-color,color,box-shadow] duration-(--dur-fast) ease-out',
         'hover:not-data-disabled:not-data-checked:text-fg data-checked:bg-raised data-checked:text-fg data-checked:shadow-card',
         'data-disabled:cursor-not-allowed data-disabled:text-fg-disabled',
         size === 'sm' ? 'text-xs' : 'text-sm',
-        className,
-      )}
+      ], className)}
       {...props}
     >
       {/* A text label truncates when the track runs out of room, rather than spilling into its neighbour. */}

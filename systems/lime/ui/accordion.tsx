@@ -2,18 +2,18 @@
 
 import {Accordion as AccordionPrimitive} from '@base-ui/react/accordion';
 import {ChevronDown, Icon} from '../icon';
-import {cn} from '../lib/utils';
+import {mergeClass} from '../lib/utils';
 
 // A stack of sections, each with a heading that opens its panel. Good for questions and answers, or a
 // settings page with a few groups. One open at a time by default; pass `multiple` to allow several. Each
 // item needs a `value`. Hairlines separate the items.
 
 function Accordion({className, ...props}: AccordionPrimitive.Root.Props) {
-  return <AccordionPrimitive.Root data-slot="accordion" className={typeof className === 'function' ? className : cn('flex w-full flex-col', className)} {...props}/>;
+  return <AccordionPrimitive.Root data-slot="accordion" className={mergeClass('flex w-full flex-col', className)} {...props}/>;
 }
 
 function AccordionItem({className, ...props}: AccordionPrimitive.Item.Props) {
-  return <AccordionPrimitive.Item data-slot="accordion-item" className={typeof className === 'function' ? className : cn('border-b border-line last:border-b-0', className)} {...props}/>;
+  return <AccordionPrimitive.Item data-slot="accordion-item" className={mergeClass('border-b border-line last:border-b-0', className)} {...props}/>;
 }
 
 function AccordionTrigger({className, children, ...props}: AccordionPrimitive.Trigger.Props) {
@@ -21,7 +21,7 @@ function AccordionTrigger({className, children, ...props}: AccordionPrimitive.Tr
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
-        className={typeof className === 'function' ? className : cn('group/accordion-trigger flex flex-1 items-center justify-between gap-3 rounded-md py-4 text-start text-base font-medium underline-offset-4 hover:not-data-disabled:underline data-disabled:cursor-not-allowed data-disabled:text-fg-disabled', className)}
+        className={mergeClass('group/accordion-trigger flex flex-1 items-center justify-between gap-3 rounded-md py-4 text-start text-base font-medium underline-offset-4 hover:not-data-disabled:underline data-disabled:cursor-not-allowed data-disabled:text-fg-disabled', className)}
         {...props}
       >
         {children}
@@ -35,7 +35,7 @@ function AccordionContent({className, children, ...props}: AccordionPrimitive.Pa
   return (
     <AccordionPrimitive.Panel
       data-slot="accordion-content"
-      className={typeof className === 'function' ? className : cn('h-(--accordion-panel-height) overflow-hidden text-sm text-fg-2 transition-[height] duration-(--dur-base) ease-(--ease-out) data-ending-style:h-0 data-starting-style:h-0', className)}
+      className={mergeClass('h-(--accordion-panel-height) overflow-hidden text-sm text-fg-2 transition-[height] duration-(--dur-base) ease-(--ease-out) data-ending-style:h-0 data-starting-style:h-0', className)}
       {...props}
     >
       <div className="pb-4">{children}</div>

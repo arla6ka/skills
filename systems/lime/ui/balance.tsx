@@ -1,7 +1,7 @@
 import {cva, type VariantProps} from 'class-variance-authority';
 import {Icon, Wallet} from '../icon';
 import {cn} from '../lib/utils';
-import {formatAmount, spokenAmount} from './amount';
+import {formatAmount, spokenAmount, toMoney} from './amount';
 
 // The amount a person has left, kept in the header, lit with the subtle lime glow. Pass `low` under your
 // own limit and it turns amber and says so in words. It is a button: onClick opens the add money flow, or
@@ -31,11 +31,13 @@ type BalanceProps = Omit<React.ComponentProps<'button'>, 'children'> & VariantPr
 };
 
 function Balance({value, currency = 'USD', low, actionLabel = 'Add money', className, ...props}: BalanceProps) {
+  // A balance that is not a number reads "Unavailable" and is never called low, since nothing says it is.
+  const isLow = Boolean(low) && toMoney(value) !== null;
   return (
-    <button type="button" data-slot="balance" aria-label={`${spokenAmount(value, {currency})}${low ? ', running low' : ''}. ${actionLabel}`} className={cn(balanceVariants({low}), className)} {...props}>
+    <button type="button" data-slot="balance" aria-label={`${spokenAmount(value, {currency})}${isLow ? ', running low' : ''}. ${actionLabel}`} className={cn(balanceVariants({low: isLow}), className)} {...props}>
       <Icon icon={Wallet} size={16}/>
       <span aria-hidden="true">{formatAmount(value, {currency})}</span>
-      {low && <span aria-hidden="true" className="font-normal">left</span>}
+      {isLow && <span aria-hidden="true" className="font-normal">left</span>}
     </button>
   );
 }

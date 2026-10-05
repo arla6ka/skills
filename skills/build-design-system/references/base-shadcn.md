@@ -73,7 +73,7 @@ In order of preference: use an existing variant, use a semantic token, add a CSS
 
 The commands behind seed mode's steps (`modes.md`, Seed) when shadcn is the foundation, on Next.js:
 
-1. `shadcn init -t next` will not scaffold into a folder that already has a `package.json`, and `create-next-app` refuses one with a README or dot folders. Run `npx create-next-app@latest <tmp>/app --ts --tailwind --app --eslint --use-npm --yes` in a temp folder outside the repo, move its files in (`node_modules` excluded, the repo's README, `.git` and agent folders kept, `package.json` merged by hand), then `npm install`, `npx shadcn@latest init -d` and `npx shadcn@latest info --json`.
+1. `shadcn init -t next` will not scaffold into a folder that already has a `package.json`, and `create-next-app` refuses one with a README or dot folders. Run `npx create-next-app@latest <tmp>/app --ts --tailwind --app --use-npm --yes` in a temp folder outside the repo, move its files in (`node_modules` excluded, the repo's README, `.git` and agent folders kept, `package.json` merged by hand), then `npm install`, `npx shadcn@latest init -d` and `npx shadcn@latest info --json`.
 2. `init -d` writes the neutral base gray and has no base-color flag. Switch with `npx shadcn@latest migrate base-color --to <name>`. `migrate --list` names the bases the installed version offers. The brand hex goes into `--primary`, in the file's format (OKLCH on current shadcn).
 3. Dark mode that follows the OS: a `prefers-color-scheme: dark` block, or a theme provider that sets `.dark` from the OS setting, such as next-themes with `attribute="class"` and `defaultTheme="system"`.
 4. Status roles are `--success` and `--warning` pairs, from the preset's chart or destructive hues where one fits. Stock variants with alpha fills, such as a destructive Badge, are measured like any pair.
@@ -85,10 +85,11 @@ A system built on shadcn ships as a namespaced registry, `@team`, not an npm pac
 
 - The source is a `registry.json` with `name`, `homepage` and `items`. Tokens ship as a `registry:theme` or `registry:style` item with `cssVars`, components as `registry:ui` items, patterns as `registry:block`. `shadcn build` writes the built items to `public/r`.
 - Apps add the namespace to `components.json` under `registries`, such as `"@team": "https://ui.team.dev/r/{name}.json"`, with a token header from the environment for a private registry.
-- Pin a version through the registry repo's commit, a `#ref` for GitHub-hosted items, or a `version` param. Migrations record the pin in `frame.md`.
+- Pin a version through the registry repo's commit, a `#ref` for git-hosted items, or a `version` param. Migrations record the pin in `frame.md`.
 - Our metadata goes under each item's `meta`: `docs`, `markdown`, `entry`, `states`, `tokens`, `replaces`, `status`. The item `name` is the registry id. There is no second registry file. `system-structure.md` gives the same fields for non-shadcn projects.
 - The item's `docs` field holds the one-line install message and the URL of the component's `.md` twin, since agents using the registry read that first.
 - In a monorepo, a workspace `packages/ui` is the alternative. Apps import it by workspace name, and `shadcn init --monorepo` sets up the aliases.
+- A namespaced install lands in the app by type: `registry:ui` items in `components/<name>/ui/`, the theme's CSS (`tokens.css`, `styles.css`) at the top of `components/<name>/`, library files in `lib/<name>/`, a lint plugin in `lib/<name>/lint/` with its config at the root beside the app's own lint config, and the skill in `.agents/skills/<name>/`. The tokens sit under the system's own selector, such as `[data-system="<name>"]`, not `:root`. The app has no `registry.json`. `check-system.mjs --init` reads this layout.
 - `registry:base` ships a whole system with config. Use it only when the team wants every app to start from the same preset.
 
 Publishing the registry to a public URL is a stop and ask.

@@ -22,7 +22,7 @@ An app may run on a design system installed from a registry: a `SKILL.md` in `.c
 
 ## The project's lint
 
-Run the project's design lint first: an installed design system's lint config (`<name>.eslint.config.mjs` at the root, run as its skill says), or the lint the project already has (`npm run lint`, or the linter its config names), on the scoped files. Record the command and exit code in the Review record. A design lint covers raw colors, arbitrary values and restyled components, so read its output before capturing and look for those on screen. A lint finding points the probes at a file. It becomes a ranked finding only with a render that shows it, and the rest stay in the Review record with the lint's rule names. With no lint, write `lint: none`.
+Run the project's design lint first: an installed design system's lint config (`<name>.<tool>lint.config.mjs` at the root, run as its skill says), or the lint the project already has (`npm run lint`, or the linter its config names), on the scoped files. Record the command and exit code in the Review record. A design lint covers raw colors, arbitrary values and restyled components, so read its output before capturing and look for those on screen. A lint finding points the probes at a file. It becomes a ranked finding only with a render that shows it, and the rest stay in the Review record with the lint's rule names. With no lint, write `lint: none`.
 
 ## Inferring the purpose
 
@@ -44,6 +44,8 @@ Captures follow `browser.md` (Before the first check, and the three rules under 
 "On mobile" or a named device class means one capture at the phone width with touch emulation on (`capture.mjs --mobile --widths <the app's narrowest width, default 390>`, which sets isMobile and hasTouch).
 
 Each finding's evidence type is seen (a named capture), measured (the value and command, or the requests that fired), or inferred. Each finding also carries a dedupe key, `<criterion number or trap/rule ID>|<element role and name, or region>`, the same on every route and viewport, so repeats merge into one finding with a count and a coordinator's ledger merges this report with other reviews. An inferred finding enters `Next:` or a fix brief only as the check that settles it. Device emulation doesn't reliably reproduce sticky hover, safe areas or the software keyboard, so a touch finding checked only in emulation says `emulated, needs a device`, and a hover check also reads the source for `:hover` rules outside `@media (hover: hover)`. An input's font size is computed, so `trap/touch-input-zoom` is `measured` in emulation.
+
+A dark pass is evidence only once the page changed. When the app switches themes itself, such as a `data-theme` attribute set from localStorage or a class on the root, browser color-scheme emulation changes nothing. Switch the app's own theme the way its toggle does, reload when the value is read at load, then read a surface's computed `background-color` before and after. Same value: the pass did not run, so no dark finding stands on it. Name the switch and both values in the record.
 
 ## The dev overlay
 

@@ -30,11 +30,18 @@ const weekday = new Intl.DateTimeFormat('en-US', {weekday: 'short', timeZone: 'U
 const day = new Intl.DateTimeFormat('en-US', {day: 'numeric', timeZone: 'UTC'});
 const spoken = new Intl.DateTimeFormat('en-US', {weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC'});
 
+// A bill with no pay makes no claim: guessing "You pay" would hide a bill that goes out on its own.
+function payer(bill: Bill, autopayLabel: string) {
+  if (bill.paid) return 'Paid';
+  return bill.pay === 'autopay' ? autopayLabel : bill.pay === 'manual' ? 'You pay' : null;
+}
+
 function BillSchedule({bills, available, autopayLabel = 'Paid for you', className, ...props}: BillScheduleProps) {
   return (
     <ol data-slot="bill-schedule" className={cn('flex w-full min-w-0 flex-col gap-3', className)} {...props}>
-      {bills.map(bill => (
-        <li key={`${bill.name}-${bill.due.toISOString()}`} data-paid={bill.paid || undefined} className={cn('flex min-w-0 items-center gap-3', bill.paid && 'text-fg-3')}>
+      {bills.map(bill => {
+        const note = payer(bill, autopayLabel);
+        return <li key={`${bill.name}-${bill.due.toISOString()}`} data-paid={bill.paid || undefined} className={cn('flex min-w-0 items-center gap-3', bill.paid && 'text-fg-3')}>
           <time dateTime={bill.due.toISOString().slice(0, 10)} className="flex w-10 shrink-0 flex-col items-center rounded-field bg-surface py-1 leading-none">
             <span className="sr-only">{spoken.format(bill.due)}</span>
             <span aria-hidden="true" className="text-xs text-fg-3">{weekday.format(bill.due)}</span>
@@ -44,11 +51,11 @@ function BillSchedule({bills, available, autopayLabel = 'Paid for you', classNam
             <p className={cn('truncate text-sm font-medium', bill.paid && 'text-fg-3')}>{bill.name}</p>
             {!bill.paid && amountAffordability(bill.amount, available) === 'insufficient'
               ? <p className="truncate text-xs text-danger-text">Not enough to cover it</p>
-              : <p className="truncate text-xs text-fg-3">{bill.paid ? 'Paid' : bill.pay === 'autopay' ? autopayLabel : 'You pay'}</p>}
+              : note && <p className="truncate text-xs text-fg-3">{note}</p>}
           </div>
           <Amount value={bill.amount} available={bill.paid ? undefined : available} className={cn(bill.paid && 'text-fg-3')}/>
-        </li>
-      ))}
+        </li>;
+      })}
     </ol>
   );
 }

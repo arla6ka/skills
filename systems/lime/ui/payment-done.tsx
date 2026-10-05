@@ -1,7 +1,8 @@
 'use client';
 
-import {useEffect, useId, useRef, useState, type ReactNode} from 'react';
+import {useEffect, useId, useState, type ReactNode} from 'react';
 import {Icon, Undo} from '../icon';
+import {useFocusWhenReplaced} from '../lib/use-focus-when-replaced';
 import {cn} from '../lib/utils';
 import {formatAmount, spokenAmount} from './amount';
 import {Button} from './button';
@@ -64,16 +65,8 @@ function PaymentDone({to, amount, currency, leading, detail, state = 'sent', und
   }, [state, undoPending, left]);
 
   const limitId = useId();
-  const footer = useRef<HTMLDivElement>(null);
-  const outcome = useRef<HTMLSpanElement>(null);
-  const hadUndo = useRef(canUndo);
-  useEffect(() => {
-    const had = hadUndo.current;
-    hadUndo.current = canUndo;
-    if (!had || canUndo) return;
-    const active = document.activeElement;
-    if (!active || active === document.body || footer.current?.contains(active)) outcome.current?.focus();
-  }, [canUndo]);
+  // When Undo leaves while it has focus, focus moves to the Status.
+  const {region: footer, target: outcome} = useFocusWhenReplaced(!canUndo);
 
   const minutes = Math.floor(Math.max(left, 0) / 60);
   const seconds = String(Math.max(left, 0) % 60).padStart(2, '0');
@@ -94,10 +87,9 @@ function PaymentDone({to, amount, currency, leading, detail, state = 'sent', und
       <div ref={footer} aria-live="polite" className="flex min-h-(--control-md) items-center justify-between gap-3">
         <Status
           ref={outcome}
-          tabIndex={-1}
+          focusable
           status={state === 'sending' ? 'running' : state === 'undone' ? 'canceled' : 'done'}
           label={words[state]}
-          className="rounded-sm"
         />
         {canUndo && (
           <Button

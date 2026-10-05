@@ -31,21 +31,29 @@ const cardVariants = cva('flex flex-col gap-4 rounded-panel p-5 text-fg', {
   defaultVariants: {variant: 'surface', interactive: false},
 });
 
-type CardProps = React.ComponentProps<'div'> & VariantProps<typeof cardVariants> & {
-  /** With interactive: render a link to this address instead of a button. */
-  href?: string;
-};
+type CardLook = {variant?: VariantProps<typeof cardVariants>['variant']};
 
-function Card({className, variant, interactive, href, ...props}: CardProps) {
-  const classes = cn(cardVariants({variant, interactive}), interactive && variant === 'outline' && 'hover:bg-surface active:bg-surface-2', variant === 'glow' && (interactive ? 'hover:bg-accent active:bg-accent' : 'glow-still'), className);
-  if (interactive && href) {
-    return <a data-slot="card" href={href} className={cn(classes, 'no-underline')} {...(props as React.ComponentProps<'a'>)}/>;
+/** A plain card is a div; an interactive one is a button, or a link with href. Each takes its own element's props. */
+type CardProps =
+  | (React.ComponentProps<'div'> & CardLook & {interactive?: false; href?: never})
+  | (React.ComponentProps<'button'> & CardLook & {interactive: true; href?: never})
+  | (React.ComponentProps<'a'> & CardLook & {interactive: true; href: string});
+
+const cardClass = (variant: CardLook['variant'], interactive: boolean, className: string | undefined) =>
+  cn(cardVariants({variant, interactive}), interactive && variant === 'outline' && 'hover:bg-surface active:bg-surface-2', variant === 'glow' && (interactive ? 'hover:bg-accent active:bg-accent' : 'glow-still'), className);
+
+function Card(props: CardProps) {
+  if (props.interactive && props.href !== undefined) {
+    const {className, variant, interactive: _, ...rest} = props;
+    return <a data-slot="card" className={cn(cardClass(variant, true, className), 'no-underline')} {...rest}/>;
   }
-  if (interactive) {
+  if (props.interactive) {
+    const {className, variant, interactive: _, href: __, ...rest} = props;
     // A button is inline by default and centres its text; the card fills its column and reads from the start.
-    return <button data-slot="card" type="button" className={cn(classes, 'w-full text-start')} {...(props as React.ComponentProps<'button'>)}/>;
+    return <button data-slot="card" type="button" className={cn(cardClass(variant, true, className), 'w-full text-start')} {...rest}/>;
   }
-  return <div data-slot="card" className={classes} {...props}/>;
+  const {className, variant, interactive: _, href: __, ...rest} = props;
+  return <div data-slot="card" className={cardClass(variant, false, className)} {...rest}/>;
 }
 
 function CardHeader({className, ...props}: React.ComponentProps<'div'>) {
