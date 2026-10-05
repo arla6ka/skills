@@ -220,7 +220,9 @@ const vague = (() => {
 const files = [];
 const plain = []; // .md files with "## States" and no spec marker: plain entries, skipped
 const kinds = new Map(); // file -> "component" | "foundation"
-const stripFenced = (t) => t.replace(/^(```|~~~)[\s\S]*?^\1/gm, "");
+// A fence may sit indented inside a list item, as a multi-line Correct or Wrong example does.
+const FENCE = /^\s*(```|~~~)/;
+const stripFenced = (t) => t.replace(/^\s*(```|~~~)[\s\S]*?^\s*\1/gm, "");
 const walk = (p) => {
   const st = statSync(p, { throwIfNoEntry: false });
   if (!st) { console.error(`not found: ${p}`); process.exit(2); }
@@ -246,7 +248,7 @@ function headings(lines) {
   const h2 = [], h3 = [];
   let fence = false;
   lines.forEach((l, i) => {
-    if (/^(```|~~~)/.test(l)) fence = !fence;
+    if (FENCE.test(l)) fence = !fence;
     if (fence) return;
     let m;
     if ((m = l.match(/^## (.+?)\s*$/))) h2.push({ name: m[1], line: i + 1 });
@@ -260,6 +262,7 @@ function usageSections(lines) {
   const out = [];
   let inUsage = false, cur = null, fence = false;
   lines.forEach((l, i) => {
+    // An unindented fence only. An indented one belongs to a rule's example and joins its text.
     if (/^(```|~~~)/.test(l)) { fence = !fence; return; }
     if (fence) return;
     if (/^## /.test(l)) { inUsage = /^## Usage\s*$/.test(l); cur = inUsage ? { name: "Usage", line: i + 1, lines: [] } : null; if (cur) out.push(cur); return; }
@@ -564,7 +567,7 @@ for (const file of files) {
   if (!noFresh && file !== STDIN) {
     let inF = false;
     lines.forEach((l, i) => {
-      if (/^(```|~~~)/.test(l)) { inF = !inF; return; }
+      if (FENCE.test(l)) { inF = !inF; return; }
       if (inF || /\bplanned\b/i.test(l)) return;
       for (const m of l.matchAll(/`([^`]+)`/g)) {
         const t = m[1].trim();
@@ -628,7 +631,7 @@ for (const file of files) {
   // spec/placeholder, outside fenced blocks
   let fence = false;
   lines.forEach((l, i) => {
-    if (/^(```|~~~)/.test(l)) fence = !fence;
+    if (FENCE.test(l)) { fence = !fence; return; }
     const prose = l.replace(/`[^`]*`/g, "").replace(/<\/?(br|kbd)\s*\/?>/gi, "");
     if (!fence && /<[A-Za-z][^<>]*>/.test(prose))
       fail(i + 1, "spec/placeholder", "template placeholder left in");
@@ -865,7 +868,7 @@ for (const file of files) {
     let inFence = false;
     const cited = new Set();
     lines.forEach((l, i) => {
-      if (/^(```|~~~)/.test(l)) inFence = !inFence;
+      if (FENCE.test(l)) inFence = !inFence;
       if (inFence) return;
       for (const m of l.matchAll(/(?<![\w/.@-])((?:[\w@()[\].-]+\/)*[\w@()[\].-]+\.(?:tsx|jsx|ts|js|mjs|css|scss)):(\d+)(?:[-\u2013](\d+))?/g)) {
         const [, path, a, b] = m, from = Number(a), to = Number(b || a);
