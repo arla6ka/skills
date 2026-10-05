@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // check-spec.mjs [--root <repo>] [--no-props] [--no-fresh] [--no-rule-tests] [--no-examples] <file-or-folder or ->...
+// check-spec.mjs --twin [--max-lines <n>] <file-or-folder>...
 // check-spec.mjs --self-test [--fixtures <dir>]
 // --root defaults to the git root of the first file or folder, else of the current folder, else the current folder.
 // Fails a component spec that leaves a question from references/spec-template.md open, and a rule line that breaks
@@ -61,10 +62,14 @@ const CITE_RE = /^[-*] Follows `(rule\/[a-z0-9-]+)`\.?$/;
 // A rule the four tests sent to a gate (references/spec-template.md, Gated rules): - Gated: `rule/<id>` (G-NN). <question>
 const GATED_RE = /^[-*] Gated: `(rule\/[a-z0-9]+(?:-[a-z0-9]+)*)` \((G-[\w-]+)\)\.? \S/;
 const ID_RE = /^rule\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// A fence may sit indented inside a list item, as a multi-line Correct or Wrong example does.
+const FENCE = /^\s*(```|~~~)/;
+const stripLiterals = (s) => s.replace(/`[^`]*`/g, " ").replace(/"[^"]*"/g, " ").replace(/\u201c[^\u201d]*\u201d/g, " ");
 
 const HELP = `check-spec.mjs: fail a component spec that leaves a question open
 
 Usage: node scripts/check-spec.mjs [options] <file-or-folder or ->...
+       node scripts/check-spec.mjs --twin [--max-lines <n>] <file-or-folder>...
        node scripts/check-spec.mjs --self-test [--fixtures <dir>]
 
 Folders are searched for component specs (*.md with a "## States" heading) and
@@ -86,6 +91,17 @@ A rule that went to a gate stays in its section as one line, on component and
 foundation pages alike:
   - Gated: \`rule/<id>\` (G-NN). <the question in plain words>
 
+--twin checks a shipped agent twin instead of a repo spec: every .md file under
+the paths. A rule is a list item, numbered or not, with an optional id and then
+MUST, SHOULD or NEVER:
+  1. button-no-div NEVER Build a button from a div, because <what breaks>.
+     - Wrong: \`<div onClick={save}>\`
+     - Correct: \`<Button onClick={save}>\`
+spec/twin-rule fails a MUST or NEVER rule with no "because", and a NEVER rule
+with no Wrong example. spec/twin-budget fails a twin over --max-lines.
+spec/twin-decisions fails a foundation twin with no table. Evidence, Check,
+rule-tests and Traps checked stay in the repo spec and are not asked for.
+
 Options
   --root <dir>       repo root. Default: the git root of the first file or folder,
                      else of the current folder, else the current folder
@@ -96,6 +112,8 @@ Options
                      pull request uses it. spec/motion still runs
   --no-rule-tests    skip spec/rule-tests
   --no-examples      skip spec/examples
+  --twin             check shipped agent twins, as above
+  --max-lines <n>    with --twin, the line budget each twin must stay under
   --self-test        run the fixtures in --fixtures <dir>, default
                      fixtures/check-spec/ beside this script, and nothing else
   --fixtures <dir>   the fixture folder for the self-test
@@ -109,7 +127,7 @@ const USAGE_LINE = "usage: check-spec.mjs [--root <repo>] [--no-props] [--no-fre
 const argv = process.argv.slice(2);
 if (argv.includes("--help") || argv.includes("-h")) { console.log(HELP); process.exit(0); }
 const valOf = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
-const FLAGS = ["--root", "--no-props", "--no-fresh", "--no-rule-tests", "--no-examples", "--self-test", "--fixtures", "--help"];
+const FLAGS = ["--root", "--no-props", "--no-fresh", "--no-rule-tests", "--no-examples", "--self-test", "--fixtures", "--help", "--twin", "--max-lines"];
 const badFlags = argv.filter((a) => a.startsWith("--") && !FLAGS.includes(a));
 if (badFlags.length) { console.error(`check-spec: unknown ${badFlags.join(", ")}\n${USAGE_LINE}`); process.exit(2); }
 if (argv.includes("--self-test")) process.exit(selfTest(valOf("--fixtures")) ? 0 : 1);
@@ -119,7 +137,11 @@ const noProps = argv.includes("--no-props");
 const noFresh = argv.includes("--no-fresh");
 const noRuleTests = argv.includes("--no-rule-tests");
 const noExamples = argv.includes("--no-examples");
-const args = argv.filter((a, i) => !a.startsWith("--") && !(ri >= 0 && i === ri + 1));
+const mi = argv.indexOf("--max-lines");
+const twin = argv.includes("--twin");
+const maxLines = mi >= 0 ? Number(argv[mi + 1]) : null;
+if (mi >= 0 && !(maxLines > 0)) { console.error(`check-spec: --max-lines needs a positive number\n${USAGE_LINE}`); process.exit(2); }
+const args = argv.filter((a, i) => !a.startsWith("--") && !(ri >= 0 && i === ri + 1) && !(mi >= 0 && i === mi + 1));
 const STDIN = "<stdin>";
 const stdinText = args.includes("-") ? readFileSync(0, "utf8") : null;
 const readSpec = (f) => (f === STDIN ? stdinText : readFileSync(f, "utf8"));
@@ -216,12 +238,68 @@ const vague = (() => {
   return { hard: hard.map((w) => [w, re(w)]), soft: soft.map((w) => [w, re(w)]) };
 })();
 
+// ---------- twin mode ----------
+// A shipped agent twin is a compact rendering of the repo spec from typed data (system-structure.md, Shipped twin).
+// Every .md file under the paths is a twin. A rule is a list item, numbered or not, with an optional id, then
+// MUST, SHOULD or NEVER. Lines indented under it belong to it, such as "- Correct: `code`" and "- Wrong:" over an
+// indented fence. Evidence, Check, rule-tests and Traps checked stay in the repo spec, so they are not asked for.
+// spec/twin-rule    a MUST or NEVER rule with no "because", or a NEVER rule with no Wrong example
+// spec/twin-budget  the twin runs past --max-lines
+// spec/twin-decisions  a foundation twin (a FOUNDATIONS slug, or a file in a foundations/ folder) with no table
+// spec/vague-word, spec/rule-id (an id defined twice in one twin) and spec/placeholder apply as on a spec.
+if (twin) {
+  const RULE = /^(\s{0,3})(?:[-*]|\d+\.)\s+(?:`?((?:rule\/)?[a-z0-9]+(?:-[a-z0-9]+)+)`?:?\s+)?\**(MUST|SHOULD|NEVER)\**\s+(\S.*)$/;
+  const EXAMPLE = /^\s+(?:[-*]\s+)?(Correct|Wrong|Do|Don['\u2019]t):\s*(.*)$/;
+  const twins = [];
+  const walkT = (p) => {
+    const st = statSync(p, { throwIfNoEntry: false });
+    if (!st) { console.error(`not found: ${p}`); process.exit(2); }
+    if (st.isDirectory()) { for (const e of readdirSync(p).sort()) if (!e.startsWith(".") && e !== "node_modules") walkT(join(p, e)); return; }
+    if (p.endsWith(".md")) twins.push(p);
+  };
+  args.filter((a) => a !== "-").map((a) => (existsSync(resolve(a)) || !existsSync(join(root, a)) ? a : join(root, a))).forEach(walkT);
+  if (!twins.length) { console.log("no twins found. A twin is a .md file under the given paths"); process.exit(1); }
+  let tf = 0;
+  for (const file of twins) {
+    const lines = readFileSync(file, "utf8").replace(/\n$/, "").split("\n");
+    const fail = (line, rule, msg) => { tf++; console.log(`${file}:${line} ${rule} ${msg}`); };
+    if (maxLines && lines.length > maxLines) fail(maxLines + 1, "spec/twin-budget", `${lines.length} lines, over the budget of ${maxLines}. Cut prose before rules, and move detail to the repo spec`);
+    const foundation = FOUNDATIONS.includes(basename(file, ".md")) || posix(dirname(file)).split("/").includes("foundations");
+    let fence = false, cur = null, tables = 0;
+    const rules = [], seen = new Map();
+    lines.forEach((l, i) => {
+      if (FENCE.test(l)) { fence = !fence; if (cur && /^\s/.test(l) && cur.want) { cur[cur.want] = true; cur.want = null; } return; }
+      if (fence) return;
+      if (/^\s*\|.*\|\s*$/.test(l) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || "")) tables++;
+      const prose = l.replace(/`[^`]*`/g, "").replace(/<\/?(br|kbd)\s*\/?>/gi, "");
+      if (/<[A-Za-z][^<>]*>/.test(prose)) fail(i + 1, "spec/placeholder", "template placeholder left in");
+      const r = RULE.exec(l);
+      if (r) { cur = { line: i + 1, indent: r[1].length, id: r[2], level: r[3], text: r[4], correct: false, wrong: false, want: null }; rules.push(cur); return; }
+      if (!cur) return;
+      if (!l.trim() || !/^\s/.test(l) || l.match(/^\s*/)[0].length <= cur.indent && /^\s*(?:[-*]|\d+\.)\s/.test(l)) { if (l.trim()) cur = null; return; }
+      const ex = EXAMPLE.exec(l);
+      if (ex) { const k = /^(Correct|Do)$/.test(ex[1]) ? "correct" : "wrong"; if (ex[2].trim()) cur[k] = true; else cur.want = k; return; }
+      cur.text += " " + l.trim();
+    });
+    if (foundation && !tables) fail(1, "spec/twin-decisions", "a foundation twin needs a decision table, such as | When | Use |, so an agent picks the token without reading prose");
+    for (const r of rules) {
+      const label = r.id || `${r.level} rule`;
+      if (r.id) { if (seen.has(r.id)) fail(r.line, "spec/rule-id", `'${r.id}' also defined at line ${seen.get(r.id)}`); else seen.set(r.id, r.line); }
+      const b = /\bbecause\b/i.exec(r.text);
+      if (r.level !== "SHOULD" && !b) fail(r.line, "spec/twin-rule", `${label} is ${r.level} and gives no reason. Add "because <what breaks>"`);
+      if (r.level === "NEVER" && !r.wrong) fail(r.line, "spec/twin-rule", `${label} is NEVER and has no Wrong example. Add "- Wrong:" with the code it forbids`);
+      const bare = stripLiterals(b ? r.text.slice(0, b.index) : r.text);
+      for (const [w, re] of vague.hard) if (re.test(bare)) fail(r.line, "spec/vague-word", `${label} leans on '${w}'. Replace it with the number or literal it stands for`);
+    }
+  }
+  console.log(`${twins.length} twin(s) checked, ${tf} failure(s)`);
+  process.exit(tf ? 1 : 0);
+}
+
 // ---------- which files ----------
 const files = [];
 const plain = []; // .md files with "## States" and no spec marker: plain entries, skipped
 const kinds = new Map(); // file -> "component" | "foundation"
-// A fence may sit indented inside a list item, as a multi-line Correct or Wrong example does.
-const FENCE = /^\s*(```|~~~)/;
 const stripFenced = (t) => t.replace(/^\s*(```|~~~)[\s\S]*?^\s*\1/gm, "");
 const walk = (p) => {
   const st = statSync(p, { throwIfNoEntry: false });
@@ -330,7 +408,6 @@ function groundKind(g) {
   if (/^gate G-\d+ default/.test(g)) return "gate";
   return null;
 }
-const stripLiterals = (s) => s.replace(/`[^`]*`/g, " ").replace(/"[^"]*"/g, " ").replace(/\u201c[^\u201d]*\u201d/g, " ");
 
 // Definitions across the scanned files plus docs/system/*.md, for duplicate IDs and citations.
 const defIndex = new Map(); // id -> [{ abs, shown, line }]

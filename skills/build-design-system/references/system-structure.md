@@ -16,6 +16,7 @@ Contents
 - After the run
 - Rules and coverage gaps
 - Markdown twins
+- Repo spec and shipped twin
 - llms.txt
 - Registry
 - Load conditions in AGENTS.md
@@ -100,15 +101,20 @@ File-name tricks, such as a dynamic route folder whose name ends in `.md`, fail 
 
 ## Overview page
 
-One screen. In order:
+Short enough to read before every task. In order:
 
 1. One sentence on what the system covers and which app it serves.
 2. How to import a component, as one code block.
 3. The one rule for new UI, such as "Use a registry component. If none fits, open a gate before writing one."
-4. Links to each foundation, the brand page, the component list and `llms.txt`.
-5. The command that runs the checks.
+4. The priority order: which kind of rule wins when two conflict, as a numbered list, such as accessibility, then tokens, then existing components, then scales, then polish.
+5. The page shell: the root element, the content width per kind of screen, the header, the page title, a section and the main action, each as one line of real markup.
+6. The when-to-ask line: what an agent asks the person for, such as an amount or a limit it was not given, and that it decides everything else from the rules and says what it chose.
+7. The reject list: what the system never does, a few lines, such as a second brand hue or a looping animation.
+8. Blocks, when the system ships them: whole-screen recipes built only from registry components, each with its install command and import, so an agent starts a screen from one instead of a blank file.
+9. Links to each foundation, the brand page, the component list and `llms.txt`.
+10. The command that runs the checks.
 
-Done when every link resolves and the component list comes from the registry.
+Done when every link resolves, the component and block lists come from the registry, and the priority order, page shell and reject list each trace to a decision in this app.
 
 ## Foundation pages
 
@@ -235,7 +241,7 @@ In every mode, phase 7 documents the shared state patterns: loading, error, empt
 Every page has a twin at the same path with `.md` appended. Agents read the twin.
 
 - Generate the twin from the same source as the page. Never write it by hand.
-- Keep the page's H2s and H3s, in the same order.
+- Keep the page's H2s and H3s, in the same order. A twin shipped to other apps may take the compact shape instead (Repo spec and shipped twin).
 - Replace each live example with its code block and one line saying what it renders.
 - Write tokens and props as Markdown tables.
 - Start with the generator's HTML comment on the first line, then an H1 and the one-sentence description. End with the component's source path, which the generator adds from the registry. No generation date, since a date makes every fresh generation differ from the committed twin.
@@ -243,6 +249,25 @@ Every page has a twin at the same path with `.md` appended. Agents read the twin
 - Serve it with `Content-Type: text/markdown`. Where the framework allows it, also return the twin when a request sends `Accept: text/markdown` to the page URL, and add `<link rel="alternate" type="text/markdown">` to the page head.
 
 `gen-docs.mjs --check` fails a stale twin.
+
+## Repo spec and shipped twin
+
+A system that ships to other apps, such as through a registry, has two readers on different budgets. The repo spec serves whoever maintains the system. The shipped twin serves an agent building a screen in another app, which reads it before every task, so every line costs on every task.
+
+| | Repo spec | Shipped twin |
+|---|---|---|
+| Lives at | `docs/system/<slug>.md` | the page's `.md` URL and the installed skill |
+| Written | by hand, to `spec-template.md` | generated from typed docs data |
+| A rule carries | When, because, Evidence, Check, Don't and Do | MUST, SHOULD or NEVER, because, Correct and Wrong |
+| Also holds | rule-tests rows, Traps checked, the Foundation diff, call sites | decision tables on foundations, the Props table |
+| Checked by | `check-spec.mjs docs/system` | `check-spec.mjs --twin --max-lines <n>` |
+
+- The typed data holds each rule once, with its id, level, reason and examples, and renders both the human page and the twin. The repo spec keeps the evidence and the rule tests under the same id. The twin leaves them out, since an agent building a screen acts on neither.
+- A twin rule is one list item: `` 1. <id> NEVER <action>, because <what breaks>. `` Under it, `- Correct:` and `- Wrong:` each hold one line of code, or a fence indented under the label. MUST and NEVER give a reason. NEVER shows the Wrong code it forbids.
+- A foundation twin leads with a decision table, such as `| When | Use |`, one row per job, so an agent picks the token from the job without reading prose.
+- Set a line budget per kind of twin, such as one for a component page and a larger one for the skill, and fail the build past it. Over budget, cut prose first, then merge rules. Never cut the examples.
+
+Done when `check-spec.mjs --twin --max-lines <n>` exits 0 on every twin, every rule id in a twin is defined in a repo spec, and each twin equals a fresh generation.
 
 ## llms.txt
 
@@ -324,6 +349,7 @@ Add these to the phase 5 check. The first three run on every system. The rest ap
 
 - `node scripts/gen-docs.mjs --check`: every twin, the rules page, the index and `llms.txt` equal a fresh generation, and no orphaned twin is left.
 - `node scripts/check-spec.mjs docs/system`: every spec answers the template, with the nine H2s in order, its rules in shape, and its example files present.
+- `node scripts/check-spec.mjs --twin --max-lines <n> <twins>`, when the system ships a compact twin: every rule gives its level, MUST and NEVER give a reason, NEVER shows its Wrong code, and no twin runs past its budget.
 - `node scripts/copy-check.mjs`, once `docs/system/writing.md` exists: the copy inventory is fresh and the app's strings follow the writing page.
 - Every registry entry has a source file that exists and a spec in `docs/system/`.
 - Every value in the entry's `variants` and every `states` item has an example file, and every example file compiles against current exports.
@@ -343,6 +369,7 @@ Add these to the phase 5 check. The first three run on every system. The rest ap
 | Rules and coverage gaps | `rules.md` is fresh, every coverage gap names what to do meanwhile |
 | Decisions | `docs/system/decisions.md` is committed, opens with its precedence, and every page and component each decision names says or does it |
 | Twins and `llms.txt` | `gen-docs.mjs --check` exits 0, every `llms.txt` link loads |
+| Shipped twin, when the system ships to other apps | `check-spec.mjs --twin` exits 0 under the budget, and every rule id in it is defined in a repo spec |
 | AGENTS.md | The load-conditions block names real paths and the real check command, and the generated index sits between its markers |
 | HTML docs site, optional | The Done line under Component pages holds, and `check-docs-leak.mjs` exits 0 |
 | Live showcase, when the person reviews in a browser | One page per component and foundation, a navigator-only sidebar, the rules rendered on every page, and the agent view passing its tests |

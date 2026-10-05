@@ -15,6 +15,8 @@ Contents
 
 One file per component at `docs/system/<component>.md` in the app's repo, the path `system-structure.md` gives the entry. The page and its Markdown twin render from it.
 
+This template is the repo spec. A system that ships to other apps may also render a compact twin from typed docs data, under a line budget (`system-structure.md`, Repo spec and shipped twin). The twin keeps each rule's id, reason and examples, as MUST, SHOULD or NEVER with Correct and Wrong code. Evidence, Check, the rule-tests rows and Traps checked stay here. `check-spec.mjs --twin` checks the twin, and this page's rules check the spec.
+
 In build, harden and seed modes, the one writer `coordinator-path.md` (Lock before fan-out) names fills the first spec as the pattern, in the same commit as its component, and the coordinator shows its page to the person before any fan-out. Then the coordinator sends one component per worker with `references/worker-brief.md`, naming that first spec as the exemplar, pasting this template, `rule-method.md` for the Usage rules, `spec-example-combobox.md` for depth and method, and the family's trap rows from `traps.md`. A worker fills the spec from the component's code, call sites and rendered states in this app. It never copies answers from the example, which describes a different app.
 
 ## The fixed questions
@@ -201,5 +203,15 @@ Older `component-docs` headings land here:
 | `spec/props-drift` | A Variants axis or value, or a Props note, no longer matches the component's props at HEAD. When the component forwards a native element's attributes, native names such as `type`, `disabled`, `readOnly` and `inputMode` count as props (`--no-props` skips it) |
 | `spec/call-sites` | The "Real uses, <n> call sites" count differs from the `<Name` tags in the check's include folders outside the component's folder and the examples folder, or the line is missing |
 | `spec/stale-cite` | A cited `file:line` or `file:start-end` no longer exists, or its text changed since the spec's last commit. A spec with uncommitted edits skips the text comparison. `--no-fresh` skips this rule and `spec/call-sites` |
+
+`node scripts/check-spec.mjs --twin --max-lines <n> <twins>` checks a shipped twin instead:
+
+| Rule | Fails when |
+|---|---|
+| `spec/twin-rule` | A MUST or NEVER rule gives no "because", or a NEVER rule has no `Wrong:` example |
+| `spec/twin-budget` | The twin runs past `--max-lines` |
+| `spec/twin-decisions` | A foundation twin has no decision table |
+
+`spec/vague-word`, `spec/placeholder` and `spec/rule-id` (an id defined twice in one twin) apply to a twin too.
 
 Run it in CI beside the docs checks in `system-structure.md`. See it fail once on a spec with a blank state row before trusting it.
