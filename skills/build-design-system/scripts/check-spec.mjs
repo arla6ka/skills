@@ -64,6 +64,9 @@ const GATED_RE = /^[-*] Gated: `(rule\/[a-z0-9]+(?:-[a-z0-9]+)*)` \((G-[\w-]+)\)
 const ID_RE = /^rule\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // A fence may sit indented inside a list item, as a multi-line Correct or Wrong example does.
 const FENCE = /^\s*(```|~~~)/;
+// The text spec/placeholder reads: code spans cut out by CommonMark's rule (a run of n backticks closes on the next
+// run of exactly n), then URLs and paths, where <name> stands for a segment, then <br> and <kbd>.
+const placeholderIn = (l) => /<[A-Za-z][^<>]*>/.test(l.replace(/(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g, " ").replace(/\b[a-z][\w+.-]*:\/\/\S*|\S*\/\S*/gi, " ").replace(/<\/?(br|kbd)\s*\/?>/gi, ""));
 const stripLiterals = (s) => s.replace(/`[^`]*`/g, " ").replace(/"[^"]*"/g, " ").replace(/\u201c[^\u201d]*\u201d/g, " ");
 
 const HELP = `check-spec.mjs: fail a component spec that leaves a question open
@@ -250,6 +253,7 @@ const vague = (() => {
 if (twin) {
   const RULE = /^(\s{0,3})(?:[-*]|\d+\.)\s+(?:`?((?:rule\/)?[a-z0-9]+(?:-[a-z0-9]+)+)`?:?\s+)?\**(MUST|SHOULD|NEVER)\**\s+(\S.*)$/;
   const EXAMPLE = /^\s+(?:[-*]\s+)?(Correct|Wrong|Do|Don['\u2019]t):\s*(.*)$/;
+  const META = /^[a-z][a-z0-9-]*:\s/;
   const twins = [];
   const walkT = (p) => {
     const st = statSync(p, { throwIfNoEntry: false });
@@ -265,14 +269,15 @@ if (twin) {
     const fail = (line, rule, msg) => { tf++; console.log(`${file}:${line} ${rule} ${msg}`); };
     if (maxLines && lines.length > maxLines) fail(maxLines + 1, "spec/twin-budget", `${lines.length} lines, over the budget of ${maxLines}. Cut prose before rules, and move detail to the repo spec`);
     const foundation = FOUNDATIONS.includes(basename(file, ".md")) || posix(dirname(file)).split("/").includes("foundations");
-    let fence = false, cur = null, tables = 0;
+    // The key: value lines at the top, bare or between --- lines, are metadata, where <name> is a slot the install fills.
+    let fence = false, cur = null, tables = 0, head = true;
     const rules = [], seen = new Map();
     lines.forEach((l, i) => {
       if (FENCE.test(l)) { fence = !fence; if (cur && /^\s/.test(l) && cur.want) { cur[cur.want] = true; cur.want = null; } return; }
       if (fence) return;
       if (/^\s*\|.*\|\s*$/.test(l) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || "")) tables++;
-      const prose = l.replace(/`[^`]*`/g, "").replace(/<\/?(br|kbd)\s*\/?>/gi, "");
-      if (/<[A-Za-z][^<>]*>/.test(prose)) fail(i + 1, "spec/placeholder", "template placeholder left in");
+      if (head) { if (/^---\s*$/.test(l) || !l.trim() || META.test(l)) return; head = false; }
+      if (placeholderIn(l)) fail(i + 1, "spec/placeholder", "template placeholder left in");
       const r = RULE.exec(l);
       if (r) { cur = { line: i + 1, indent: r[1].length, id: r[2], level: r[3], text: r[4], correct: false, wrong: false, want: null }; rules.push(cur); return; }
       if (!cur) return;
@@ -709,8 +714,7 @@ for (const file of files) {
   let fence = false;
   lines.forEach((l, i) => {
     if (FENCE.test(l)) { fence = !fence; return; }
-    const prose = l.replace(/`[^`]*`/g, "").replace(/<\/?(br|kbd)\s*\/?>/gi, "");
-    if (!fence && /<[A-Za-z][^<>]*>/.test(prose))
+    if (!fence && placeholderIn(l))
       fail(i + 1, "spec/placeholder", "template placeholder left in");
   });
 

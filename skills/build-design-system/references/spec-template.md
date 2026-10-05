@@ -189,7 +189,7 @@ Older `component-docs` headings land here:
 | `spec/dont-do` | A rule has no nested `Don't:` line or no `Do:` line under it |
 | `spec/rule-tests` | A rule has no `rule-tests` row, a test cell is not `pass` or `n/a: <reason>`, a defined rule's verdict is not `ship` or `rewritten`, or a `gate` row names no gate or its rule is still defined |
 | `spec/examples` | A variant value or state has no Example files row, a composition row is missing, or a listed file is missing or incomplete |
-| `spec/placeholder` | A `<...>` from the template is left in |
+| `spec/placeholder` | A `<...>` from the template is left in, outside code spans, URLs and paths |
 | `spec/foundation` | Description has no `Foundation:` line, or no `### Foundation` H3 with a filled table |
 | `spec/traps` | Description has no `Traps checked:` line |
 | `spec/states-table` | States has no table with State, Trigger and Checked by columns |
@@ -212,6 +212,6 @@ Older `component-docs` headings land here:
 | `spec/twin-budget` | The twin runs past `--max-lines` |
 | `spec/twin-decisions` | A foundation twin has no decision table |
 
-`spec/vague-word`, `spec/placeholder` and `spec/rule-id` (an id defined twice in one twin) apply to a twin too.
+`spec/vague-word`, `spec/placeholder` and `spec/rule-id` (an id defined twice in one twin) apply to a twin too. The `key: value` lines at the top of a twin are metadata, so a `<name>` slot there passes.
 
 Run it in CI beside the docs checks in `system-structure.md`. See it fail once on a spec with a blank state row before trusting it.
