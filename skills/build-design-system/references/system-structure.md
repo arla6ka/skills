@@ -343,6 +343,18 @@ In phase 3, find the other agent-instruction files and brand guides (AGENTS.md, 
 
 On a full footprint, phase 8 also writes four project skills in the repo's skills folder, named after the product, and the block names each: use (build screens with the system: the component picker, the bans, page anatomy, states and a pre-ship check), maintain (add or change a component or token end to end, with the verification commands and the dev-environment traps met in the run, and a correction log, where a correction lands as a token, variant or check once it repeats, and its count is rechecked after the fix), review (the lenses in `coordinator-path.md`, Review, decide, fix) and migrate (one legacy screen per commit, with before and after captures). Each points to the docs and never restates their rules. One worker writes them from the finished system, not from the run's briefs, runs every command it names once, and reports each inconsistency it finds as a fix before close. Everything they cite, trap and rule IDs included, is defined in the repo, never only in an installed skill.
 
+A system shipped to other apps through a registry writes one installed skill instead: a `SKILL.md` the theme item puts in `.agents/skills/<name>/`, read by an agent in an app that never saw the system's repo. Its sections, in order:
+
+1. `## Steps`. Numbered, the order an agent builds in: start from a block when one fits, pick components from the index and fetch each twin, build from the tokens only, frame the screen with the page shell, ask only what the when-to-ask line names, run the shipped lint, review at the Frame's widths before finishing.
+2. The overview's priority order, global rules, page shell, anti-slop and reject list (Overview page), each rule in the twin shape.
+3. Coverage gaps, each with its meanwhile, and the imports for support pieces.
+4. `## Icons`. The one import point, the call shape, and every glyph name the system ships.
+5. `## Tokens`. The closed list, grouped by role, and how utilities spell them.
+6. The component index: one line per component with its twin's URL, its job and its import.
+7. `## Blocks`. One line per whole-screen recipe: what the screen does, its install command and its import.
+
+It is a shipped twin, so it is generated from the typed docs data, held to a line budget by `check-spec.mjs --twin`, and never restates a rule a component twin owns. The repo keeps its own maintain, review and migrate skills when the team wants them.
+
 ## Checks for the docs
 
 Add these to the phase 5 check. The first three run on every system. The rest apply once an HTML docs site exists.
@@ -374,3 +386,4 @@ Add these to the phase 5 check. The first three run on every system. The rest ap
 | HTML docs site, optional | The Done line under Component pages holds, and `check-docs-leak.mjs` exits 0 |
 | Live showcase, when the person reviews in a browser | One page per component and foundation, a navigator-only sidebar, the rules rendered on every page, and the agent view passing its tests |
 | Project skills, on a full footprint | Use, maintain, review and migrate exist in the repo, every command they name ran once, and the agent-instructions block names them |
+| Installed skill, when the system ships through a registry | The theme item installs one `SKILL.md` with Steps, Icons, Tokens, the component index and Blocks, it is generated, and `check-spec.mjs --twin` passes it under its budget |

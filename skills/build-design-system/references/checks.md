@@ -139,6 +139,17 @@ Moving a handler into an effect, a ref callback or a runtime class string so a r
 
 A `<dialog onClick>` with no `onCancel` still fails.
 
+## Shipping a design lint
+
+A system shipped through a registry can ship its lint as one more registry item, so every app that installs the system gets the rules in its editor and its check command. The check then defers to it (Projects with a design lint).
+
+- The item installs the plugin in `lib/<name>/lint/` and its config at the root. The plugin reads a list of the system's classes that the build generates, so it never loads the styling framework.
+- Each lint rule's `meta` names the doc rule id it enforces, and its docs link points at the page that defines that id. A message names the fix: the token, class or component to use instead.
+- Every lint rule has a bad fixture that must produce its finding. One good fixture, real code written to the system, must stay clean under every rule, which catches a rule that fires on correct code.
+- The build runs the fixtures before it publishes the item, and fails on a lint rule whose doc rule id no page defines.
+
+Done when every lint rule names a defined doc rule id, every bad fixture fails, the good fixture is clean, and the build runs all three checks.
+
 ## What the check can't see
 
 Every report ends with "The check cannot see", from `--list-blind-spots` (`blindSpots` in `--json`), and `gen-docs.mjs` copies it to the rules page. It names rendered and non-text contrast, behavior (what Enter, Escape or Cancel does, focus return), layout and target size, overrides on unlisted components or built at runtime, loading states that do not use a label ternary, class names built at runtime, framework built-ins such as `bg-white`, files outside `include`, stale role comments, and the rules marked "review". A final message that says the check guards drift names these limits in the same breath.
