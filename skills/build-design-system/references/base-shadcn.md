@@ -89,6 +89,7 @@ A system built on shadcn ships as a namespaced registry, `@team`, not an npm pac
 - Our metadata goes under each item's `meta`: `docs`, `markdown`, `entry`, `states`, `tokens`, `replaces`, `status`. The item `name` is the registry id. There is no second registry file. `system-structure.md` gives the same fields for non-shadcn projects.
 - The item's `docs` field holds the one-line install message and the URL of the component's `.md` twin, since agents using the registry read that first.
 - In a monorepo, a workspace `packages/ui` is the alternative. Apps import it by workspace name, and `shadcn init --monorepo` sets up the aliases.
+- A namespaced install lands in the app by type: `registry:ui` items in `components/<name>/ui/`, the theme's CSS (`tokens.css`, `styles.css`) at the top of `components/<name>/`, library files in `lib/<name>/`, a lint plugin in `lib/<name>/lint/` with its config at the root beside the app's own lint config, and the skill in `.agents/skills/<name>/`. The tokens sit under the system's own selector, such as `[data-system="<name>"]`, not `:root`. The app has no `registry.json`. `check-system.mjs --init` reads this layout.
 - `registry:base` ships a whole system with config. Use it only when the team wants every app to start from the same preset.
 
 Publishing the registry to a public URL is a stop and ask.

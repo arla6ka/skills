@@ -85,7 +85,8 @@ Config keys (all optional, JSON)
                                                 .design-system, .migration, __fixtures__,
                                                 skill folders and any folder with a SKILL.md
   tokenSources   files where raw values may sit on custom property lines (--x: #fff)
-  uiDir          the component folder           "components/ui"
+  uiDir          the component folder           "components/ui", else an installed
+                                                system's components/<name>/ui
   examplesDir    the docs' example files, always scanned  gen-docs.config.json's, else
                                                 "docs/system/examples"
   registry       registry file                  "registry.json"
@@ -100,7 +101,8 @@ Config keys (all optional, JSON)
                  such as TextLink) are added for the background-and-padding test
   stockDir       upstream copies of customized ui files  "scripts/ui-stock"
   overlayComponents ["Dialog","Sheet","AlertDialog","Popover","Drawer"]
-  varIgnore      custom property prefixes set at runtime by a library, never flagged
+  varIgnore      custom property prefixes set at runtime by a library, never flagged.
+                 --init adds the prefix of each one a dependency's code names
   sharedTokens   :root color tokens meant to hold one value in every theme
   aliases        {"@/": "src/"}                 default: from tsconfig paths
   deprecated     extra deprecated import paths, beside registry "replaces"
@@ -236,7 +238,7 @@ const DEFAULTS = {
   buttonSignatureMin: 4,
   linkComponents: ["a", "Link"],
   overlayComponents: ["Dialog", "Sheet", "AlertDialog", "Popover", "Drawer"],
-  varIgnore: ["--tw-", "--radix-", "--anchor-", "--available-", "--transform-origin", "--popup-", "--positioner-", "--active-tab-", "--accordion-panel-", "--collapsible-panel-", "--scroll-area-", "--reka-", "--kb-"],
+  varIgnore: ["--tw-", "--radix-", "--anchor-", "--available-", "--transform-origin", "--popup-", "--positioner-", "--active-tab-", "--accordion-panel-", "--collapsible-panel-", "--scroll-area-", "--reka-", "--kb-", "--toast-", "--drawer-", "--nested-", "--snap-point-"],
   sharedTokens: [],
   aliases: null,
   deprecated: [],
@@ -398,7 +400,12 @@ function loadConfig(root, file, override) {
   const cfg = { ...DEFAULTS, ...user, ...(override || {}) };
   cfg.root = root;
   cfg.varIgnore = [...DEFAULTS.varIgnore, ...(user.varIgnore || []), ...((override || {}).varIgnore || [])];
-  if (!cfg.uiDir) cfg.uiDir = ["components/ui", "src/components/ui", "src/ui", "ui"].find((d) => existsSync(join(root, d))) || null;
+  // A namespaced registry install (base-shadcn.md, Distribution) puts a system's primitives in components/<name>/ui
+  // and its lint plugin in lib/<name>/lint. The plugin's messages quote the values it forbids, so it is not scanned.
+  const systems = [...installedSystems(cfg)].sort();
+  if (!cfg.uiDir) cfg.uiDir = [...UI_DIRS, ...systems.flatMap((n) => [`components/${n}/ui`, `src/components/${n}/ui`])].find((d) => existsSync(join(root, d))) || null;
+  cfg.installedUi = !!cfg.uiDir && systems.some((n) => [`components/${n}/ui`, `src/components/${n}/ui`].includes(posix(cfg.uiDir)));
+  cfg.exclude = [...cfg.exclude, ...systems.flatMap((n) => [`lib/${n}/lint`, `src/lib/${n}/lint`]).filter((d) => existsSync(join(root, d)) && !cfg.exclude.includes(d))];
   cfg.aliases = cfg.aliases || tsAliases(root);
   // The docs' example files are product code a reader copies, so the scan covers them: examplesDir from the config,
   // else from scripts/gen-docs.config.json, else docs/system/examples.
@@ -468,6 +475,7 @@ function loadConfig(root, file, override) {
   return cfg;
 }
 
+const UI_DIRS = ["components/ui", "src/components/ui", "src/ui", "ui"];
 const PROJECT_LINT_RULES = ["rule/raw-value", "rule/palette-use", "rule/arbitrary-value", "rule/component-override"];
 const LINT_CONFIGS = ["eslint.config.js", "eslint.config.mjs", "eslint.config.cjs", "eslint.config.ts", "eslint.config.mts", "eslint.config.cts", ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc.yml", ".eslintrc.yaml", ".oxlintrc.json"];
 const SYSTEM_LINT_CONFIG = /^([a-z0-9][\w-]*)\.eslint\.config\.(?:[cm]?js|[cm]?ts)$/i;
@@ -1185,7 +1193,11 @@ function scan(cfg, only) {
     checkFile(cfg, rel, report, d && d.status === "customized" ? stockLinesFor(cfg, rel) : null);
   }
   // unregistered files directly in the ui folder
-  if (cfg.uiDir && !cfg.off.has("rule/unregistered-ui")) {
+  // An installed system's ui folder came from someone else's registry, so with no registry file here nothing to
+  // register against exists.
+  const foreignUi = cfg.installedUi && !existsSync(join(cfg.root, cfg.registry || "registry.json"));
+  if (foreignUi && !cfg.off.has("rule/unregistered-ui")) cfg.notes.push(`${cfg.uiDir} is an installed system's ui folder and ${cfg.registry} does not exist, so rule/unregistered-ui is skipped`);
+  if (cfg.uiDir && !foreignUi && !cfg.off.has("rule/unregistered-ui")) {
     for (const e of uiEntries(cfg)) {
       const rel = `${posix(cfg.uiDir)}/${e}`;
       if (!/\.(tsx|jsx|ts|js|vue|svelte)$/.test(e) || /^index\.\w+$/.test(e) || /\.(test|spec|stories)\./.test(e)) continue;
@@ -1321,6 +1333,45 @@ function newFindings(findings, changed, allow) {
   return out.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : a.line - b.line));
 }
 
+// Custom properties the code reads that nothing in the repo defines and a dependency's code names: a headless
+// library sets them on its parts at runtime (swipe offsets, anchor sizes, panel heights). Each comes back as its
+// first-segment prefix, such as --toast-, with the package that sets it.
+function libraryVars(cfg, tokenFiles) {
+  const defined = new Set(), read = new Map();
+  for (const rel of [...listFiles(cfg), ...tokenFiles]) {
+    const text = readRel(cfg, rel);
+    for (const m of text.matchAll(/(?:^|[;{\s"'`])(--[\w-]+)["'`]?\s*:/g)) defined.add(m[1]);
+    for (const m of text.matchAll(/setProperty\(\s*["'`](--[\w-]+)/g)) defined.add(m[1]);
+    for (const m of text.matchAll(/var\(\s*(--[\w-]+)\s*\)|-\((--[\w-]+)\)/g)) { const n = m[1] || m[2]; if (!read.has(n)) read.set(n, rel); }
+  }
+  const open = [...read.keys()].filter((n) => !defined.has(n) && !cfg.varIgnore.some((p) => n.startsWith(p)));
+  if (!open.length) return [];
+  let pkg = {};
+  try { pkg = readJSON(join(cfg.root, "package.json")); } catch {}
+  const deps = Object.keys({ ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}), ...(pkg.peerDependencies || {}) });
+  const texts = [];
+  for (const d of deps) {
+    const base = join(cfg.root, "node_modules", d);
+    let budget = 3000;
+    const walkPkg = (abs) => {
+      if (budget <= 0) return;
+      const st = statSync(abs, { throwIfNoEntry: false });
+      if (!st) return;
+      if (st.isDirectory()) { if (/(?:^|\/)node_modules$/.test(abs) && abs !== base) return; for (const e of readdirSync(abs)) walkPkg(join(abs, e)); return; }
+      if (!/\.(?:[cm]?js|css)$/.test(abs) || st.size > 4e6) return;
+      budget--;
+      texts.push([d, readFileSync(abs, "utf8")]);
+    };
+    walkPkg(base);
+  }
+  const out = [];
+  for (const n of open) {
+    const hit = texts.find(([, text]) => text.includes(n));
+    if (hit) out.push({ name: n, prefix: (/^--[a-z0-9]+-/.exec(n) || [n])[0], pkg: hit[0] });
+  }
+  return out;
+}
+
 // ---------- self-test ----------
 const defaultFixtures = () => ((p) => existsSync(p) ? p : join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "check-system"))(join(dirname(fileURLToPath(import.meta.url)), "fixtures", "check-system"));
 function selfTest(dirArg) {
@@ -1421,6 +1472,26 @@ function unitTests(dir) {
     r = run("--explain", "trap/viewport-height");
     t("--explain", r.code === 0 && /^Why: \S/m.test(r.out) && /^Fix: \S/m.test(r.out), r.out.split("\n").slice(0, 2).join(" / "));
   } finally { rmSync(tmp, { recursive: true, force: true }); }
+  // --init on a namespaced registry install: components/<name>/ui, a scoped tokens.css, the system's lint plugin
+  // in lib/<name>/lint, no registry.json, and a dependency that sets a custom property at runtime.
+  const initSrc = join(dir, "_init");
+  if (!existsSync(initSrc)) { t("--init fixtures", false, `missing ${initSrc}`); return { ok, n }; }
+  const it = realpathSync(mkdtempSync(join(tmpdir(), "check-system-init-")));
+  try {
+    cpSync(initSrc, it, { recursive: true });
+    const unfixAll = (d) => { for (const e of readdirSync(d)) { const p = join(d, e); if (statSync(p).isDirectory()) unfixAll(p); else if (e.endsWith(".fixture")) renameSync(p, p.slice(0, -8)); } };
+    unfixAll(it);
+    mkdirSync(join(it, "node_modules", "headless-kit"), { recursive: true });
+    writeFileSync(join(it, "node_modules", "headless-kit", "package.json"), '{ "name": "headless-kit", "main": "index.js" }\n');
+    writeFileSync(join(it, "node_modules", "headless-kit", "index.js"), 'export const pin = (el, y) => el.style.setProperty("--sheet-offset", `${y}px`);\n');
+    const run = (...a) => { const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), "--root", it, "--no-self-test", ...a], { cwd: it, encoding: "utf8", env: { ...process.env, GITHUB_ACTIONS: "" } }); return { code: r.status, out: (r.stdout || "") + (r.stderr || "") }; };
+    let r = run("--init");
+    let c = {};
+    try { c = JSON.parse(readFileSync(join(it, "scripts/check-system.config.json"), "utf8")); } catch {}
+    t("--init finds a namespaced install", r.code === 0 && c.uiDir === "components/brand/ui" && (c.tokenSources || []).includes("components/brand/tokens.css") && (c.varIgnore || []).includes("--sheet-"), `exit ${r.code}, uiDir ${c.uiDir}, tokenSources ${JSON.stringify(c.tokenSources)}, varIgnore ${JSON.stringify(c.varIgnore)}`);
+    r = run("--no-allowlist");
+    t("an installed system checks clean", r.code === 0 && !/rule\/unregistered-ui|lib\/brand\/lint|--sheet-offset|--drawer-/.test(r.out.replace(/^note: .*$/gm, "")), `exit ${r.code}, ${r.out.split("\n").filter((l) => /^\S+:\d+ /.test(l)).slice(0, 3).join(" | ") || r.out.split("\n")[0]}`);
+  } finally { rmSync(it, { recursive: true, force: true }); }
   return { ok, n };
 }
 
@@ -1464,7 +1535,11 @@ if (flag("--init")) {
   // The default folders, plus a root styles/ folder and the ui folder when no default folder holds them.
   const include = [...DEFAULTS.include, "styles", cfg.uiDir && cfg.uiDir.split("/")[0]].filter((d, i, a) => d && a.indexOf(d) === i && existsSync(join(root, d)));
   const css = [];
-  const walk = (rel) => { const abs = join(root, rel); const st = statSync(abs, { throwIfNoEntry: false }); if (!st || /node_modules|\.next|\.git/.test(rel)) return; if (st.isDirectory()) readdirSync(abs).forEach((e) => walk(rel ? `${rel}/${e}` : e)); else if (CSS_EXT.test(rel) && /(:root|@theme)[^{]*\{[^}]*--[\w-]+\s*:/.test(readFileSync(abs, "utf8"))) css.push(rel); };
+  // A token file: custom properties under :root or @theme, or under any selector in a file named tokens, theme or
+  // variables, or one at the top of an installed system's folder, which scopes its tokens to its own selector.
+  const systemTops = [...installedSystems(cfg)].flatMap((n) => [`components/${n}`, `src/components/${n}`]);
+  const tokenFile = (rel, text) => /(:root|@theme)[^{]*\{[^}]*--[\w-]+\s*:/.test(text) || ((/(?:^|\/)(?:tokens|theme|variables)\.[a-z]+$/.test(rel) || systemTops.includes(dirname(rel))) && /\{[^}]*--[\w-]+\s*:/.test(text));
+  const walk = (rel) => { const abs = join(root, rel); const st = statSync(abs, { throwIfNoEntry: false }); if (!st || /node_modules|\.next|\.git/.test(rel)) return; if (st.isDirectory()) readdirSync(abs).forEach((e) => walk(rel ? `${rel}/${e}` : e)); else if (CSS_EXT.test(rel) && tokenFile(rel, readFileSync(abs, "utf8"))) css.push(rel); };
   include.forEach(walk);
   // Never write an empty value for a key a rule reads: an empty {} or [] reads as a decision. Leave the key out,
   // so the default applies at every run, and say so.
@@ -1472,7 +1547,9 @@ if (flag("--init")) {
   const said = [];
   const put = (k, v, why) => { const empty = v == null || (Array.isArray(v) ? !v.length : typeof v === "object" && !Object.keys(v).length); if (empty) said.push(`${k}: ${why}`); else out[k] = v; };
   put("tokenSources", css, "no CSS file with :root or @theme custom properties found. Left out, so raw values count everywhere until you list the token files");
-  put("uiDir", cfg.uiDir, "no components/ui, src/components/ui, src/ui or ui folder. Left out; set it when the system's folder exists");
+  put("uiDir", cfg.uiDir, "no components/ui, src/components/ui, src/ui, ui or installed components/<name>/ui folder. Left out; set it when the system's folder exists");
+  const lib = libraryVars(cfg, css);
+  put("varIgnore", lib.map((x) => x.prefix).filter((x, i, a) => a.indexOf(x) === i), "every custom property the code reads is defined in the repo or already ignored");
   Object.assign(out, { registry: DEFAULTS.registry, driftList: DEFAULTS.driftList, allowlist: DEFAULTS.allowlist });
   const exported = uiExports(cfg);
   put("nativeControls", cfg.nativeControls, `no Button, Input, Select, Textarea, Dialog, Checkbox or RadioGroup export found in ${cfg.uiDir || "a ui folder"}, its barrel or the registry. Left out, so each run derives it again once one exists`);
@@ -1481,6 +1558,9 @@ if (flag("--init")) {
   writeFileSync(p, JSON.stringify(out, null, 2) + "\n");
   console.log(`wrote ${p}. Read it: tokenSources, uiDir and nativeControls are guesses.`);
   if (out.nativeControls) console.log(`nativeControls from the ui exports (${[...exported].filter((n) => /^[A-Z]/.test(n)).length} exported names): ${Object.entries(out.nativeControls).map(([k, v]) => `<${k}> -> ${v}`).join(", ")}`);
+  for (const x of lib) console.log(`varIgnore ${x.prefix}: ${x.name} is read and never defined here, and ${x.pkg} sets it at runtime`);
+  if (cfg.installedUi && !existsSync(join(root, cfg.registry))) console.log(`${cfg.uiDir} is an installed system's ui folder and ${cfg.registry} does not exist, so rule/unregistered-ui is skipped`);
+  for (const d of cfg.exclude.filter((e) => /(?:^|\/)lib\/[^/]+\/lint$/.test(e))) console.log(`${d} is an installed system's lint plugin, so it is not scanned`);
   for (const l of said) console.log(`left at the default, ${l}`);
   process.exit(0);
 }
