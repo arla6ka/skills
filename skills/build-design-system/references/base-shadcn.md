@@ -85,7 +85,7 @@ A system built on shadcn ships as a namespaced registry, `@team`, not an npm pac
 
 - The source is a `registry.json` with `name`, `homepage` and `items`. Tokens ship as a `registry:theme` or `registry:style` item with `cssVars`, components as `registry:ui` items, patterns as `registry:block`. `shadcn build` writes the built items to `public/r`.
 - Apps add the namespace to `components.json` under `registries`, such as `"@team": "https://ui.team.dev/r/{name}.json"`, with a token header from the environment for a private registry.
-- Pin a version through the registry repo's commit, a `#ref` for GitHub-hosted items, or a `version` param. Migrations record the pin in `frame.md`.
+- Pin a version through the registry repo's commit, a `#ref` for git-hosted items, or a `version` param. Migrations record the pin in `frame.md`.
 - Our metadata goes under each item's `meta`: `docs`, `markdown`, `entry`, `states`, `tokens`, `replaces`, `status`. The item `name` is the registry id. There is no second registry file. `system-structure.md` gives the same fields for non-shadcn projects.
 - The item's `docs` field holds the one-line install message and the URL of the component's `.md` twin, since agents using the registry read that first.
 - In a monorepo, a workspace `packages/ui` is the alternative. Apps import it by workspace name, and `shadcn init --monorepo` sets up the aliases.
