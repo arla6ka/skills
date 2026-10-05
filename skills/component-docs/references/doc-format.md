@@ -24,6 +24,26 @@ A spec is this entry with every question in the spec template answered. The entr
 
 Read the template from the repo's `docs/system/`, with an existing spec there as the skeleton, and fall back to `build-design-system/references/spec-template.md` only when the repo has neither. The template owns everything a spec adds (extra H3s and tables, the "Gated:" line, the rules `check-spec.mjs` enforces). Where it differs from a section below, as with the States and Tokens tables, the template wins.
 
+## When the entry is a shipped twin
+
+A system that ships to other apps may also render a compact twin of each entry from typed docs data, under a line budget (`build-design-system/references/system-structure.md`, Repo spec and shipped twin). The twin is generated from that data, never written by hand. It keeps the H1, the Description sentence and import line, the Props table and the rules. Evidence, Check, the rule-tests rows and Traps checked stay in the repo spec under the same ids.
+
+Each twin rule is one list item: the id, then MUST, SHOULD or NEVER, then the action.
+
+- A MUST or NEVER rule gives its reason, with "because" and what breaks without the rule.
+- A NEVER rule has a `- Wrong:` line with the code it forbids, and a `- Correct:` line when a right form exists.
+- A MUST rule has a `- Correct:` line when it has code to show.
+- An example longer than one line goes in a fence indented under its label.
+
+```markdown
+1. toast-error-persists MUST Keep an error toast until it is closed or its action runs, because its Retry is the only path back to the failed request.
+   - Correct: `<Toast tone="error" message="Could not remove Dana" action={retry} />`
+2. toast-no-timeout NEVER Time out an error toast, because the person loses the only Retry.
+   - Wrong: `<Toast tone="error" duration={6000} message="Could not remove Dana" />`
+```
+
+Run `check-spec.mjs --twin --max-lines <n>` on the twin. It fails a MUST or NEVER rule with no reason, a NEVER rule with no Wrong line, and a twin over its budget.
+
 ## What goes in each section
 
 **Description.** One sentence on the job the component does, never how it looks. Under it, one plain line with the import statement, the runtime side when the framework splits server and client code (its client marker, its server-only marker, or none), the source path, and the status from `registry.json` when the repo has one. List named parts after that line in reading order, each required or optional, with the names from the source. When a part is also used without its parent, move the list into `### Parts` and give that part its props, standalone call sites and how it differs alone.
@@ -153,6 +173,7 @@ Spacing: `--space-inset-200`, `--space-gap-100`
 - [ ] Every When not to use line names another component and says "instead"
 - [ ] Every rule line has an ID, condition, reason, `Evidence:` and `Check:`, and survived its tests
 - [ ] Every rule has a `Don't:` line the check or a reviewer would catch, and a `Do:` line with the same case written correctly
+- [ ] In a shipped twin, every MUST and NEVER rule says because, and every NEVER rule has a `Wrong:` line
 - [ ] Example files covers the default, every variant value and state, and one composition, or says why not per row
 - [ ] Accessibility names the role, keys and screen reader output, or marks them `NEEDS REVIEW`
 - [ ] Every token name matches its source exactly, with palette use kept apart
