@@ -22,7 +22,7 @@ Three layers, stored as W3C Design Tokens (DTCG) JSON, generating CSS custom pro
 
 Each output has its own reader: people read the JSON descriptions, browsers the CSS variables, a utility framework its theme mapping, and agents the Markdown tables.
 
-Choose a lighter setup when the system is small: one theme, no utility framework, and few distinct values across all categories (default cutoff about 40, the point where a hand-kept file stops being easy to scan). Then a single hand-written CSS file of semantic variables, with a role comment per variable, is enough. The role comment does the job of `$description`. The docs generator reads it, and a variable without one fails the Done list. Record the choice. The naming rules below still apply.
+Choose a flat setup when a script reads the token file, not a person: one hand-written CSS file of semantic variables, each with a role comment in a fixed shape such as `/* job | used by */`, and a script that reads every comment and generates the token docs from it. Size, theme count and a utility framework do not decide it. A flat file holds well past a hundred tokens, two themes and a framework's theme mapping, since the generated tables are what people scan. The role comment does the job of `$description`. A variable without one, or with a comment out of shape, fails the generator, and the build runs the generator. Without that script, keep the default. Record the choice. The naming rules below still apply.
 
 ## When the foundation owns the tokens
 

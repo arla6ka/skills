@@ -15,7 +15,7 @@ Contents
 
 Wherever the inventory finds them: a CSS file of custom properties, a Sass map, a theme object in JavaScript, a Tailwind config. Often in two of those at once, which is a gate unless AGENTS.md says which wins.
 
-The default target is `token-architecture.md` as written: DTCG JSON under `tokens/`, generating CSS variables, plus the styling framework's theme mapping when there is one (`@theme` on Tailwind v4, for example). A small system, with one theme, no utility framework and a few dozen values (default cutoff about 40), needs only one hand-written CSS file of semantic variables. Existing names that the inventory shows in correct use survive.
+The default target is `token-architecture.md` as written: DTCG JSON under `tokens/`, generating CSS variables, plus the styling framework's theme mapping when there is one (`@theme` on Tailwind v4, for example). A hand-written CSS file of semantic variables is enough at any size when every variable carries a role comment and a script generates the token docs from those comments (`token-architecture.md`, The default and why). Existing names that the inventory shows in correct use survive.
 
 ## What counts as a component
 
