@@ -1335,9 +1335,11 @@ function newFindings(findings, changed, allow) {
   return out.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : a.line - b.line));
 }
 
-// Custom properties the code reads that nothing in the repo defines and a dependency's code names: a headless
-// library sets them on its parts at runtime (swipe offsets, anchor sizes, panel heights). Each comes back as its
-// first-segment prefix, such as --toast-, with the package that sets it.
+// Custom properties the code reads that nothing in the repo defines and a dependency's code sets: a headless
+// library sets them on its parts at runtime (swipe offsets, anchor sizes, panel heights). A name the library only
+// mentions or reads is the app's to define, so it stays reported. Each comes back as its full name, or as a prefix
+// such as --toast- when the library builds the name from that prefix, with the package that sets it. Each file is
+// tested as it is read and dropped; the walk stops at a file and byte budget.
 function libraryVars(cfg, tokenFiles) {
   const defined = new Set(), read = new Map();
   for (const rel of [...listFiles(cfg), ...tokenFiles]) {
@@ -1346,30 +1348,40 @@ function libraryVars(cfg, tokenFiles) {
     for (const m of text.matchAll(/setProperty\(\s*["'`](--[\w-]+)/g)) defined.add(m[1]);
     for (const m of text.matchAll(/var\(\s*(--[\w-]+)\s*\)|-\((--[\w-]+)\)/g)) { const n = m[1] || m[2]; if (!read.has(n)) read.set(n, rel); }
   }
-  const open = [...read.keys()].filter((n) => !defined.has(n) && !cfg.varIgnore.some((p) => n.startsWith(p)));
-  if (!open.length) return [];
+  const open = new Set([...read.keys()].filter((n) => !defined.has(n) && !cfg.varIgnore.some((p) => n.startsWith(p))));
+  if (!open.size) return [];
   let pkg = {};
   try { pkg = readJSON(join(cfg.root, "package.json")); } catch {}
   const deps = Object.keys({ ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}), ...(pkg.peerDependencies || {}) });
-  const texts = [];
+  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const out = [];
+  let bytes = 64e6;
+  // A file sets a name when it declares it (--x: in CSS, "--x": in a style object) or passes it to setProperty. It
+  // sets a family when it builds names from a literal prefix: `--x-${k}` or "--x-" + k.
+  const test = (d, text) => {
+    for (const m of text.matchAll(/["'`](--[\w-]+-)(?:\$\{|["'`]\s*\+)/g)) {
+      for (const n of [...open]) if (n.startsWith(m[1])) { out.push({ name: n, prefix: m[1], pkg: d }); open.delete(n); }
+    }
+    for (const n of [...open]) {
+      if (!text.includes(n)) continue;
+      const q = esc(n);
+      if (new RegExp(`(?:^|[;{\\s"'\`])${q}["'\`]?\\s*:|setProperty\\(\\s*["'\`]${q}["'\`]`).test(text)) { out.push({ name: n, prefix: n, pkg: d }); open.delete(n); }
+    }
+  };
   for (const d of deps) {
     const base = join(cfg.root, "node_modules", d);
-    let budget = 3000;
+    let files = 3000;
     const walkPkg = (abs) => {
-      if (budget <= 0) return;
+      if (files <= 0 || bytes <= 0 || !open.size) return;
       const st = statSync(abs, { throwIfNoEntry: false });
       if (!st) return;
       if (st.isDirectory()) { if (/(?:^|\/)node_modules$/.test(abs) && abs !== base) return; for (const e of readdirSync(abs)) walkPkg(join(abs, e)); return; }
       if (!/\.(?:[cm]?js|css)$/.test(abs) || st.size > 4e6) return;
-      budget--;
-      texts.push([d, readFileSync(abs, "utf8")]);
+      files--;
+      bytes -= st.size;
+      test(d, readFileSync(abs, "utf8"));
     };
     walkPkg(base);
-  }
-  const out = [];
-  for (const n of open) {
-    const hit = texts.find(([, text]) => text.includes(n));
-    if (hit) out.push({ name: n, prefix: (/^--[a-z0-9]+-/.exec(n) || [n])[0], pkg: hit[0] });
   }
   return out;
 }
@@ -1485,14 +1497,17 @@ function unitTests(dir) {
     unfixAll(it);
     mkdirSync(join(it, "node_modules", "headless-kit"), { recursive: true });
     writeFileSync(join(it, "node_modules", "headless-kit", "package.json"), '{ "name": "headless-kit", "main": "index.js" }\n');
-    writeFileSync(join(it, "node_modules", "headless-kit", "index.js"), 'export const pin = (el, y) => el.style.setProperty("--sheet-offset", `${y}px`);\n');
+    // It sets --sheet-offset by name and the --rail- family from a prefix, and only reads --color-primary, which
+    // stays the app's to define.
+    writeFileSync(join(it, "node_modules", "headless-kit", "index.js"), 'export const pin = (el, y) => el.style.setProperty("--sheet-offset", `${y}px`);\nexport const rail = (el, k, v) => el.style.setProperty(`--rail-${k}`, v);\nexport const tint = "color: var(--color-primary)";\n');
     const run = (...a) => { const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), "--root", it, "--no-self-test", ...a], { cwd: it, encoding: "utf8", env: { ...process.env, GITHUB_ACTIONS: "" } }); return { code: r.status, out: (r.stdout || "") + (r.stderr || "") }; };
     let r = run("--init");
     let c = {};
     try { c = JSON.parse(readFileSync(join(it, "scripts/check-system.config.json"), "utf8")); } catch {}
-    t("--init finds a namespaced install", r.code === 0 && c.uiDir === "components/brand/ui" && (c.tokenSources || []).includes("components/brand/tokens.css") && (c.varIgnore || []).includes("--sheet-"), `exit ${r.code}, uiDir ${c.uiDir}, tokenSources ${JSON.stringify(c.tokenSources)}, varIgnore ${JSON.stringify(c.varIgnore)}`);
+    t("--init finds a namespaced install", r.code === 0 && c.uiDir === "components/brand/ui" && (c.tokenSources || []).includes("components/brand/tokens.css") && JSON.stringify([...(c.varIgnore || [])].sort()) === '["--rail-","--sheet-offset"]', `exit ${r.code}, uiDir ${c.uiDir}, tokenSources ${JSON.stringify(c.tokenSources)}, varIgnore ${JSON.stringify(c.varIgnore)}`);
     r = run("--no-allowlist");
-    t("an installed system checks clean", r.code === 0 && !/rule\/unregistered-ui|lib\/brand\/lint|--sheet-offset|--drawer-/.test(r.out.replace(/^note: .*$/gm, "")), `exit ${r.code}, ${r.out.split("\n").filter((l) => /^\S+:\d+ /.test(l)).slice(0, 3).join(" | ") || r.out.split("\n")[0]}`);
+    const lines = r.out.split("\n").filter((l) => /^\S+:\d+ /.test(l));
+    t("an installed system reports only the undefined app token", lines.length === 1 && /rule\/token-parity/.test(lines[0]) && /--color-primary is used and never defined/.test(lines[0]) && !/rule\/unregistered-ui|lib\/brand\/lint|--sheet-offset|--rail-size|--drawer-/.test(r.out.replace(/^note: .*$/gm, "")), `exit ${r.code}, ${lines.slice(0, 3).join(" | ") || r.out.split("\n")[0]}`);
   } finally { rmSync(it, { recursive: true, force: true }); }
   return { ok, n };
 }
